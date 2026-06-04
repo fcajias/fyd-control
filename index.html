@@ -1,0 +1,2366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FYD — Control de Salida de Equipos</title>
+    <meta name="description" content="Sistema de control y seguimiento de equipos informáticos para teletrabajo. Gestión de salidas, devoluciones e incidencias.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* ==========================================================================
+           SISTEMA DE DISEÑO — MODO OSCURO PREMIUM GLASSMORPHISM
+           ========================================================================== */
+        :root {
+            --bg-app:       #060810;
+            --bg-sidebar:   #0b0e18;
+            --bg-card:      rgba(13, 18, 32, 0.75);
+            --bg-card-h:    rgba(20, 27, 48, 0.9);
+            --bg-input:     rgba(0, 0, 0, 0.3);
+            --border:       rgba(255, 255, 255, 0.07);
+            --border-focus: #3b82f6;
+
+            --text-1: #f1f5f9;
+            --text-2: #94a3b8;
+            --text-3: #4b5563;
+
+            --blue:   #3b82f6;
+            --blue-h: #2563eb;
+            --green:  #10b981;
+            --green-h:#059669;
+            --amber:  #f59e0b;
+            --orange: #f97316;
+            --red:    #ef4444;
+            --purple: #8b5cf6;
+            --rose:   #f43f5e;
+
+            --font: 'Outfit', system-ui, sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --ease: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow: 0 20px 40px -10px rgba(0,0,0,0.7);
+            --r-xl: 20px;
+            --r-lg: 14px;
+            --r-md: 10px;
+            --r-sm: 6px;
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg-app);
+            color: var(--text-1);
+            font-family: var(--font);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* === BACKGROUND AMBIENT === */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 60% 40% at 20% 10%, rgba(59,130,246,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 50% at 80% 90%, rgba(139,92,246,0.05) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* === LAYOUT === */
+        .app-shell {
+            display: grid;
+            grid-template-columns: 270px 1fr;
+            height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* === SIDEBAR === */
+        .sidebar {
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 28px 18px;
+            gap: 8px;
+            overflow-y: auto;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 0 8px;
+            margin-bottom: 28px;
+        }
+
+        .brand-logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--blue), var(--purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .brand-text h1 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            background: linear-gradient(90deg, var(--text-1), var(--text-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-text span {
+            font-size: 0.7rem;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        /* Role badge in sidebar */
+        .role-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .role-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .avatar-leader { background: linear-gradient(135deg, #f97316, #ef4444); }
+        .avatar-sistemas { background: linear-gradient(135deg, #8b5cf6, #3b82f6); }
+        .avatar-seguridad { background: linear-gradient(135deg, #10b981, #14b8a6); }
+
+        .role-info .name { font-size: 0.875rem; font-weight: 600; }
+        .role-info .role-label { font-size: 0.72rem; color: var(--text-2); }
+
+        /* Nav items */
+        .nav-section-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 14px 10px 6px;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-2);
+            font-family: var(--font);
+            text-align: left;
+            padding: 11px 14px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: var(--r-md);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            width: 100%;
+            transition: var(--ease);
+        }
+
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-1);
+        }
+
+        .nav-btn.active {
+            background: rgba(59,130,246,0.14);
+            color: #60a5fa;
+            border-left: 3px solid var(--blue);
+            padding-left: 11px;
+        }
+
+        .nav-btn .icon { font-size: 1.05rem; width: 20px; text-align: center; }
+
+        .sidebar-spacer { flex: 1; }
+
+        .sidebar-footer {
+            font-size: 0.72rem;
+            color: var(--text-3);
+            text-align: center;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* === MAIN CONTENT === */
+        .main {
+            overflow-y: auto;
+            padding: 36px 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 22px;
+        }
+
+        .page-header h2 {
+            font-size: 1.65rem;
+            font-weight: 700;
+        }
+
+        .page-header p {
+            font-size: 0.875rem;
+            color: var(--text-2);
+            margin-top: 4px;
+        }
+
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+
+        /* === GLASS CARDS === */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--r-xl);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(20px);
+            transition: var(--ease);
+        }
+
+        .card:hover { background: var(--bg-card-h); }
+
+        .card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .card-head h3 { font-size: 1.05rem; font-weight: 600; }
+        .card-head p { font-size: 0.82rem; color: var(--text-2); margin-top: 3px; }
+
+        /* === BUTTONS === */
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: var(--r-md);
+            font-family: var(--font);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--ease);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            white-space: nowrap;
+        }
+
+        .btn:active { transform: scale(0.96); }
+        .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
+
+        .btn-primary   { background: var(--blue); color: #fff; }
+        .btn-primary:hover { background: var(--blue-h); }
+        .btn-success   { background: var(--green); color: #fff; }
+        .btn-success:hover { background: var(--green-h); }
+        .btn-warning   { background: var(--amber); color: #000; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-danger    { background: var(--red); color: #fff; }
+        .btn-danger:hover  { background: #dc2626; }
+        .btn-rose      { background: var(--rose); color: #fff; }
+        .btn-rose:hover    { background: #e11d48; }
+        .btn-ghost     { background: rgba(255,255,255,0.05); color: var(--text-1); border: 1px solid var(--border); }
+        .btn-ghost:hover   { background: rgba(255,255,255,0.09); }
+        .btn-sm { padding: 6px 12px; font-size: 0.78rem; border-radius: var(--r-sm); }
+        .btn-full { width: 100%; }
+
+        /* === FORMS === */
+        .form-group { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; }
+        .form-group label { font-size: 0.82rem; font-weight: 500; color: var(--text-2); }
+
+        .form-group input, .form-group select, .form-group textarea {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+            padding: 11px 14px;
+            color: var(--text-1);
+            font-family: var(--font);
+            font-size: 0.9rem;
+            outline: none;
+            transition: var(--ease);
+            width: 100%;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+
+        .form-group select option { background: #1a1d2e; }
+
+        /* === TABLES === */
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: var(--r-lg);
+            border: 1px solid var(--border);
+            background: rgba(0,0,0,0.15);
+        }
+
+        .table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        .table th, .table td { padding: 13px 18px; text-align: left; }
+        .table th { background: rgba(255,255,255,0.02); color: var(--text-2); font-weight: 600; border-bottom: 1px solid var(--border); }
+        .table td { border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .table tr:last-child td { border-bottom: none; }
+        .table tr:hover td { background: rgba(255,255,255,0.01); }
+
+        /* === STATUS BADGES === */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: var(--r-sm);
+            font-size: 0.73rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-en-oficina   { background: rgba(255,255,255,0.05); color: var(--text-2); border: 1px solid rgba(255,255,255,0.1); }
+        .badge-teletrabajo  { background: rgba(249,115,22,0.15); color: #fb923c; border: 1px solid var(--orange); }
+        .badge-devuelto     { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid var(--green); }
+        .badge-incidencia   { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid var(--red); }
+        .badge-seleccionado { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid var(--blue); }
+
+        /* === STATS === */
+        .stats-row { display: flex; gap: 16px; flex-wrap: wrap; }
+        .stat-box {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 14px 22px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 100px;
+        }
+        .stat-num { font-size: 1.8rem; font-weight: 800; line-height: 1; }
+        .stat-lbl { font-size: 0.72rem; color: var(--text-2); margin-top: 4px; }
+        .stat-blue  .stat-num { color: #60a5fa; }
+        .stat-amber .stat-num { color: #fbbf24; }
+        .stat-green .stat-num { color: #34d399; }
+        .stat-red   .stat-num { color: #f87171; }
+
+        /* === ADVISOR GRID === */
+        .advisor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .advisor-card {
+            border-radius: var(--r-xl);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            animation: fadeUp 0.3s ease-out;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .advisor-card.selected-card {
+            border-color: var(--blue) !important;
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.3), var(--shadow);
+        }
+
+        .adv-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .adv-name { font-size: 0.95rem; font-weight: 600; margin-bottom: 3px; }
+        .adv-cedula { font-size: 0.8rem; color: var(--text-2); }
+
+        .adv-details {
+            background: rgba(0,0,0,0.2);
+            border-radius: var(--r-md);
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            font-size: 0.82rem;
+        }
+
+        .detail-row { display: flex; justify-content: space-between; }
+        .detail-row span:first-child { color: var(--text-2); }
+        .detail-row span:last-child { font-family: var(--mono); font-size: 0.8rem; font-weight: 500; }
+
+        .adv-actions { display: flex; gap: 8px; }
+        .adv-actions .btn { flex: 1; font-size: 0.8rem; padding: 8px 10px; }
+
+        /* === CHECKBOX TOGGLE === */
+        .checkbox-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .checkbox-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--blue);
+            cursor: pointer;
+        }
+
+        /* === SEARCH === */
+        .search-wrap { position: relative; }
+        .search-wrap input { padding-left: 40px; }
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-3);
+            font-size: 0.9rem;
+        }
+
+        /* === MODAL / OVERLAY === */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal {
+            background: #0f1525;
+            border: 1px solid var(--border);
+            border-radius: var(--r-xl);
+            padding: 32px;
+            width: 90%;
+            max-width: 440px;
+            box-shadow: 0 30px 60px -10px rgba(0,0,0,0.9);
+            animation: scaleIn 0.2s ease;
+        }
+
+        .modal h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
+        .modal p { font-size: 0.875rem; color: var(--text-2); margin-bottom: 22px; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .modal-actions .btn { flex: 1; }
+
+        /* === LOGIN SCREEN === */
+        .login-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-app);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-screen::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 50% 60% at 30% 20%, rgba(59,130,246,0.1) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 70% 80%, rgba(139,92,246,0.08) 0%, transparent 60%);
+        }
+
+        .login-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--r-xl);
+            padding: 44px 40px;
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 40px 80px -20px rgba(0,0,0,0.9);
+            text-align: center;
+        }
+
+        .login-logo {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, var(--blue), var(--purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 20px;
+        }
+
+        .login-box h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+        .login-box p { font-size: 0.875rem; color: var(--text-2); margin-bottom: 28px; }
+
+        .role-selector { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+
+        .role-option {
+            background: rgba(255,255,255,0.03);
+            border: 1.5px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: var(--ease);
+            text-align: left;
+        }
+
+        .role-option:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); }
+        .role-option.selected { border-color: var(--blue); background: rgba(59,130,246,0.12); }
+
+        .role-option .icon { font-size: 1.6rem; }
+        .role-option .ro-name { font-size: 0.95rem; font-weight: 600; }
+        .role-option .ro-desc { font-size: 0.77rem; color: var(--text-2); }
+
+        .pin-input {
+            font-size: 1.5rem;
+            letter-spacing: 0.5rem;
+            text-align: center;
+            font-family: var(--mono);
+        }
+
+        /* === TOAST === */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            background: #14182a;
+            border-radius: var(--r-lg);
+            padding: 14px 22px;
+            color: white;
+            font-weight: 500;
+            font-size: 0.9rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            z-index: 500;
+            border-left: 4px solid var(--blue);
+            animation: slideInRight 0.3s ease;
+            max-width: 360px;
+        }
+
+        .toast.success { border-left-color: var(--green); }
+        .toast.error   { border-left-color: var(--red); }
+        .toast.warning { border-left-color: var(--amber); }
+
+        /* === PRINT TEMPLATE === */
+        @media print {
+            body > *:not(#print-area) { display: none !important; }
+            #print-area { display: block !important; }
+            .no-print { display: none !important; }
+        }
+
+        #print-area {
+            display: none;
+        }
+
+        .print-page {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+            color: #000;
+        }
+
+        .print-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 16px; }
+        .print-header h1 { font-size: 18px; font-weight: bold; }
+        .print-header p { font-size: 12px; color: #333; margin-top: 4px; }
+
+        .print-meta { display: flex; justify-content: space-between; margin-bottom: 14px; font-size: 12px; }
+
+        .print-clauses { background: #f9f9f9; border: 1px solid #ccc; border-radius: 6px; padding: 12px; margin-bottom: 16px; font-size: 11px; }
+        .print-clauses h3 { font-size: 12px; font-weight: bold; margin-bottom: 8px; }
+        .print-clauses ol { padding-left: 18px; }
+        .print-clauses ol li { margin-bottom: 4px; }
+
+        .print-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .print-table th { background: #1a1a2e; color: white; padding: 8px 10px; text-align: left; font-size: 11px; }
+        .print-table td { padding: 8px 10px; border-bottom: 1px solid #e0e0e0; vertical-align: top; }
+        .print-table tr:nth-child(even) td { background: #f5f5f5; }
+        .print-table .sign-cell { height: 40px; min-width: 90px; }
+
+        .print-footer { margin-top: 20px; font-size: 10px; color: #555; text-align: center; border-top: 1px solid #ccc; padding-top: 10px; }
+
+        /* === UTILS === */
+        .hidden { display: none !important; }
+        .flex   { display: flex; }
+        .flex-col { display: flex; flex-direction: column; }
+        .gap-10 { gap: 10px; }
+        .gap-20 { gap: 20px; }
+        .grid-2 { display: grid; grid-template-columns: 360px 1fr; gap: 24px; align-items: start; }
+
+        /* === ASESORES LAYOUT === */
+        .asesores-layout { display: flex; flex-direction: column; gap: 24px; }
+
+        .form-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--r-xl);
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: var(--ease);
+        }
+
+        .form-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 28px;
+            cursor: pointer;
+            user-select: none;
+            transition: var(--ease);
+        }
+
+        .form-panel-header:hover { background: rgba(255,255,255,0.02); }
+
+        .form-panel-header-left { display: flex; align-items: center; gap: 14px; }
+
+        .form-panel-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--blue), var(--purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .form-panel-title { font-size: 1rem; font-weight: 700; }
+        .form-panel-subtitle { font-size: 0.8rem; color: var(--text-2); margin-top: 2px; }
+
+        .form-panel-toggle {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: var(--ease);
+            flex-shrink: 0;
+        }
+
+        .form-panel.open .form-panel-toggle { transform: rotate(45deg); }
+
+        .form-panel-body {
+            padding: 0 28px 24px;
+            display: none;
+            border-top: 1px solid var(--border);
+            margin-top: 0;
+            padding-top: 24px;
+        }
+
+        .form-panel.open .form-panel-body { display: block; }
+
+        .form-inline-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-inline-grid .span-2 { grid-column: 1 / -1; }
+
+        /* Table card full-width premium */
+        .table-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--r-xl);
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: var(--ease);
+        }
+
+        .table-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 22px 28px;
+            border-bottom: 1px solid var(--border);
+            gap: 16px;
+        }
+
+        .table-card-header-left h3 { font-size: 1.05rem; font-weight: 700; }
+        .table-card-header-left p { font-size: 0.82rem; color: var(--text-2); margin-top: 3px; }
+
+        .table-card-header-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+
+        .search-input-clean {
+            background: rgba(0,0,0,0.25);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 9px 16px 9px 38px;
+            color: var(--text-1);
+            font-family: var(--font);
+            font-size: 0.875rem;
+            outline: none;
+            transition: var(--ease);
+            width: 240px;
+        }
+
+        .search-input-clean:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+            width: 300px;
+        }
+
+        .asesor-count-pill {
+            background: rgba(59,130,246,0.12);
+            border: 1px solid rgba(59,130,246,0.25);
+            color: #60a5fa;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .table-inner { padding: 0; }
+        .table-inner .table th { padding: 13px 20px; }
+        .table-inner .table td { padding: 14px 20px; }
+        .section-gap { display: flex; flex-direction: column; gap: 20px; }
+        .control-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .grow { flex: 1; }
+        .text-muted { color: var(--text-2); font-size: 0.875rem; }
+        .text-sm { font-size: 0.82rem; }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 14px;
+            padding: 60px 30px;
+        }
+
+        .empty-icon { font-size: 3.5rem; }
+        .empty-state h3 { font-size: 1.1rem; }
+        .empty-state p { color: var(--text-2); font-size: 0.875rem; max-width: 380px; }
+
+        /* Incidencia tag */
+        .incident-row td { background: rgba(239,68,68,0.06) !important; }
+
+        /* Selection counter pill */
+        .selection-pill {
+            background: rgba(59,130,246,0.15);
+            border: 1px solid var(--blue);
+            color: #60a5fa;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        @keyframes fadeUp { from { opacity:0; transform: translateY(14px); } to { opacity:1; transform:none; } }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        @keyframes scaleIn { from { opacity:0; transform: scale(0.93); } to { opacity:1; transform: none; } }
+        @keyframes slideInRight { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform: none; } }
+    </style>
+</head>
+<body>
+
+<!-- ===== PRINT AREA ===== -->
+<div id="print-area"></div>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="login-screen" class="login-screen">
+    <div class="login-box">
+        <div class="login-logo">💻</div>
+        <h2>FYD Control de Equipos</h2>
+        <p>Selecciona tu rol para ingresar al sistema</p>
+
+        <div class="role-selector">
+            <div class="role-option" id="role-opt-lider" onclick="selectRole('lider')">
+                <span class="icon">👩‍💼</span>
+                <div>
+                    <div class="ro-name">Líder del Área</div>
+                    <div class="ro-desc">Gestiona asesores y autoriza salidas diarias</div>
+                </div>
+            </div>
+            <div class="role-option" id="role-opt-sistemas" onclick="selectRole('sistemas')">
+                <span class="icon">🖥️</span>
+                <div>
+                    <div class="ro-name">Sistemas (TI)</div>
+                    <div class="ro-desc">Monitorea y audita los movimientos de equipos</div>
+                </div>
+            </div>
+            <div class="role-option" id="role-opt-seguridad" onclick="selectRole('seguridad')">
+                <span class="icon">🛡️</span>
+                <div>
+                    <div class="ro-name">Seguridad</div>
+                    <div class="ro-desc">Verifica la lista de salidas e imprime registros</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="pin-section" class="hidden">
+            <div class="form-group">
+                <label>Ingresa la clave de acceso</label>
+                <input type="password" class="pin-input" id="pin-input" placeholder="••••" maxlength="10" onkeyup="if(event.key==='Enter') doLogin()">
+            </div>
+        </div>
+
+        <button class="btn btn-primary btn-full" id="btn-login" onclick="doLogin()" style="margin-top: 4px;">
+            Ingresar al Sistema →
+        </button>
+
+        <div id="login-error" class="hidden" style="margin-top:14px; color:#f87171; font-size:0.85rem;">
+            ❌ Clave incorrecta. Inténtalo de nuevo.
+        </div>
+    </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div class="app-shell hidden" id="app-shell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-logo">💻</div>
+            <div class="brand-text">
+                <h1>FYD CONTROL</h1>
+                <span>Equipos Informáticos</span>
+            </div>
+        </div>
+
+        <div class="role-card" id="sidebar-role-card">
+            <div class="role-avatar avatar-leader" id="sidebar-avatar">👩‍💼</div>
+            <div class="role-info">
+                <div class="name" id="sidebar-role-name">—</div>
+                <div class="role-label" id="sidebar-role-label">Rol activo</div>
+            </div>
+        </div>
+
+        <div class="nav-section-label">Navegación</div>
+
+        <!-- LÍDER navigation -->
+        <div id="nav-lider" class="hidden">
+            <button id="btn-view-asesores" class="nav-btn" onclick="switchView('asesores')">
+                <span class="icon">👥</span> Mis Asesores
+            </button>
+            <button id="btn-view-seleccionar" class="nav-btn" onclick="switchView('seleccionar')">
+                <span class="icon">✅</span> Autorizar Salidas de Hoy
+            </button>
+            <button id="btn-view-historial" class="nav-btn" onclick="switchView('historial')">
+                <span class="icon">📋</span> Historial de Movimientos
+            </button>
+        </div>
+
+        <!-- SISTEMAS navigation -->
+        <div id="nav-sistemas" class="hidden">
+            <button id="btn-view-monitor" class="nav-btn" onclick="switchView('monitor')">
+                <span class="icon">📊</span> Monitor de Salidas
+            </button>
+            <button id="btn-view-historial" class="nav-btn" onclick="switchView('historial')">
+                <span class="icon">📋</span> Historial Completo
+            </button>
+            <button id="btn-view-incidencias" class="nav-btn" onclick="switchView('incidencias')">
+                <span class="icon">⚠️</span> Incidencias
+            </button>
+        </div>
+
+        <!-- SEGURIDAD navigation -->
+        <div id="nav-seguridad" class="hidden">
+            <button id="btn-view-lista-seg" class="nav-btn" onclick="switchView('lista-seg')">
+                <span class="icon">🛡️</span> Lista de Salidas de Hoy
+            </button>
+            <button id="btn-view-imprimir" class="nav-btn" onclick="switchView('imprimir')">
+                <span class="icon">🖨️</span> Imprimir Registro
+            </button>
+        </div>
+
+        <div class="sidebar-spacer"></div>
+
+        <button class="nav-btn" onclick="logout()" style="color: #f87171;">
+            <span class="icon">🚪</span> Cerrar Sesión
+        </button>
+
+        <div class="sidebar-footer">
+            FYD Control v2.0 · Local Mode<br>
+            <span id="sidebar-date"></span>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main" id="main-content">
+        <header class="page-header">
+            <div>
+                <h2 id="view-title">—</h2>
+                <p id="view-subtitle">—</p>
+            </div>
+            <div class="header-actions" id="header-actions"></div>
+        </header>
+
+        <!-- ======== VISTA: ASESORES (LÍDER) ======== -->
+        <section id="view-asesores" class="asesores-layout hidden">
+
+            <!-- Panel: Registrar Asesor (colapsable) -->
+            <div class="form-panel" id="form-panel-wrap">
+                <div class="form-panel-header" onclick="toggleFormPanel()">
+                    <div class="form-panel-header-left">
+                        <div class="form-panel-icon">➕</div>
+                        <div>
+                            <div class="form-panel-title">Registrar Nuevo Asesor</div>
+                            <div class="form-panel-subtitle">Haz clic para desplegar el formulario de registro</div>
+                        </div>
+                    </div>
+                    <div class="form-panel-toggle">✕</div>
+                </div>
+                <div class="form-panel-body">
+                    <form id="form-advisor" onsubmit="addAdvisor(event)">
+                        <div class="form-inline-grid">
+                            <div class="form-group">
+                                <label>Cédula de Identidad</label>
+                                <input type="text" id="adv-cedula" placeholder="Ej. 1723776475" required pattern="\d{8,12}" title="8 a 12 dígitos numéricos">
+                            </div>
+                            <div class="form-group">
+                                <label>N° de Serie del Equipo</label>
+                                <input type="text" id="adv-serial" placeholder="Ej. F60K3J · C9D32ADQ" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nombre Completo del Asesor</label>
+                                <input type="text" id="adv-nombre" placeholder="Ej. Sandra Maybel Rosas García" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Modelo / Descripción del Equipo (opcional)</label>
+                                <input type="text" id="adv-modelo" placeholder="Ej. Lenovo ThinkPad E15">
+                            </div>
+                            <div class="span-2" style="display:flex; justify-content:flex-end; gap:10px; margin-top:4px;">
+                                <button type="button" class="btn btn-ghost" onclick="document.getElementById('form-advisor').reset()">Limpiar</button>
+                                <button type="submit" class="btn btn-primary" style="min-width:180px;">➕ Registrar Asesor</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tabla: Personal Registrado -->
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div class="table-card-header-left">
+                        <h3>Personal Registrado</h3>
+                        <p id="asesor-count-label">Cargando…</p>
+                    </div>
+                    <div class="table-card-header-right">
+                        <span class="asesor-count-pill" id="asesor-count-pill">0 asesores</span>
+                        <div class="search-wrap" style="position:relative;">
+                            <span class="search-icon" style="position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--text-3); pointer-events:none;">🔍</span>
+                            <input type="text" class="search-input-clean" id="search-asesores" placeholder="Buscar por nombre, cédula o serial…" oninput="filterAsesores()">
+                        </div>
+                    </div>
+                </div>
+                <div class="table-inner">
+                    <div class="table-wrap" style="border:none; border-radius:0; background:transparent;">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Cédula</th>
+                                    <th>Nombre Completo</th>
+                                    <th>N° de Serie</th>
+                                    <th>Modelo</th>
+                                    <th>Estado</th>
+                                    <th style="text-align:center;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="asesores-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ======== VISTA: SELECCIONAR SALIDAS DE HOY (LÍDER) ======== -->
+        <section id="view-seleccionar" class="section-gap hidden">
+            <div class="card">
+                <div class="card-head">
+                    <div>
+                        <h3>¿Quiénes llevan computadora hoy?</h3>
+                        <p id="seleccionar-date-label">Selecciona solo los asesores que confirmaron llevar equipo</p>
+                    </div>
+                    <div class="flex gap-10" style="align-items:center;">
+                        <span class="selection-pill" id="sel-counter">0 seleccionados</span>
+                        <button class="btn btn-success" onclick="confirmarSalidas()">
+                            ✅ Confirmar Lista de Hoy
+                        </button>
+                    </div>
+                </div>
+                <div class="control-row" style="margin-bottom:16px;">
+                    <div class="search-wrap grow">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="search-sel" placeholder="Buscar asesor…" oninput="filterSeleccion()" style="padding-left:36px; border-radius:8px;">
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="selectAll()">Seleccionar todos</button>
+                    <button class="btn btn-ghost btn-sm" onclick="clearAll()">Limpiar selección</button>
+                </div>
+                <div id="seleccion-grid" class="advisor-grid"></div>
+            </div>
+        </section>
+
+        <!-- ======== VISTA: HISTORIAL (LÍDER / SISTEMAS) ======== -->
+        <section id="view-historial" class="section-gap hidden">
+            <div class="card">
+                <div class="card-head">
+                    <div>
+                        <h3>Historial de Movimientos</h3>
+                        <p>Registro completo de salidas, devoluciones e incidencias</p>
+                    </div>
+                    <div class="flex gap-10" style="align-items:center;">
+                        <div class="form-group" style="margin:0;">
+                            <input type="date" id="historial-fecha" onchange="loadHistorial()" style="border-radius:8px; padding:8px 12px;">
+                        </div>
+                        <button class="btn btn-ghost btn-sm" onclick="clearHistorialFecha()">Ver Todo</button>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Asesor</th>
+                                <th>Cédula</th>
+                                <th>N° Serie</th>
+                                <th>Hora Salida</th>
+                                <th>Fecha Retorno</th>
+                                <th>Hora Retorno</th>
+                                <th>Estado</th>
+                                <th>Notas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historial-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======== VISTA: MONITOR (SISTEMAS) ======== -->
+        <section id="view-monitor" class="section-gap hidden">
+            <div class="stats-row">
+                <div class="stat-box stat-blue">
+                    <span class="stat-num" id="mon-total">0</span>
+                    <span class="stat-lbl">Autorizados Hoy</span>
+                </div>
+                <div class="stat-box stat-amber">
+                    <span class="stat-num" id="mon-fuera">0</span>
+                    <span class="stat-lbl">Fuera (Teletrabajo)</span>
+                </div>
+                <div class="stat-box stat-green">
+                    <span class="stat-num" id="mon-devueltos">0</span>
+                    <span class="stat-lbl">Devueltos</span>
+                </div>
+                <div class="stat-box stat-red">
+                    <span class="stat-num" id="mon-incidencias">0</span>
+                    <span class="stat-lbl">Con Incidencia</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-head">
+                    <div>
+                        <h3>Estado de Equipos — Hoy</h3>
+                        <p id="monitor-date-label">Vista en tiempo real del estado de cada equipo</p>
+                    </div>
+                    <div class="flex gap-10">
+                        <button class="btn btn-ghost btn-sm" onclick="loadMonitor()">🔄 Actualizar</button>
+                        <button class="btn btn-primary btn-sm" onclick="printSecurityList()">🖨️ Imprimir</button>
+                    </div>
+                </div>
+                <div class="control-row" style="margin-bottom: 16px;">
+                    <div class="search-wrap grow">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="search-monitor" placeholder="Buscar por nombre o cédula…" oninput="filterMonitor()" style="padding-left:36px; border-radius:8px;">
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <select id="filter-estado" onchange="filterMonitor()" style="border-radius:8px; padding:8px 12px; min-width:150px;">
+                            <option value="">Todos los estados</option>
+                            <option value="Autorizado">Autorizado (En Oficina)</option>
+                            <option value="En Teletrabajo">En Teletrabajo</option>
+                            <option value="Devuelto">Devuelto</option>
+                            <option value="Incidencia">Con Incidencia</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="monitor-grid" class="advisor-grid"></div>
+            </div>
+        </section>
+
+        <!-- ======== VISTA: INCIDENCIAS (SISTEMAS) ======== -->
+        <section id="view-incidencias" class="section-gap hidden">
+            <div class="card">
+                <div class="card-head">
+                    <div>
+                        <h3>Registro de Incidencias</h3>
+                        <p>Equipos con situaciones especiales: robo, pérdida, daño o no devuelto</p>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Asesor</th>
+                                <th>Cédula</th>
+                                <th>N° Serie</th>
+                                <th>Tipo</th>
+                                <th>Descripción</th>
+                                <th>Reportado por</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incidencias-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======== VISTA: LISTA SEGURIDAD ======== -->
+        <section id="view-lista-seg" class="section-gap hidden">
+            <div class="stats-row">
+                <div class="stat-box stat-blue">
+                    <span class="stat-num" id="seg-total">0</span>
+                    <span class="stat-lbl">Autorizados Hoy</span>
+                </div>
+                <div class="stat-box stat-amber">
+                    <span class="stat-num" id="seg-fuera">0</span>
+                    <span class="stat-lbl">Fuera (Teletrabajo)</span>
+                </div>
+                <div class="stat-box stat-green">
+                    <span class="stat-num" id="seg-devueltos">0</span>
+                    <span class="stat-lbl">Devueltos</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-head">
+                    <div>
+                        <h3>Asesores Autorizados para Hoy</h3>
+                        <p id="seg-date-label">Lista aprobada por la líder del área</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="printSecurityList()">
+                        🖨️ Imprimir Hoja de Control
+                    </button>
+                </div>
+                <div id="seg-grid" class="advisor-grid"></div>
+                <div id="seg-empty" class="empty-state hidden">
+                    <div class="empty-icon">📋</div>
+                    <h3>Sin lista para hoy</h3>
+                    <p>La líder aún no ha autorizado la lista de salidas de hoy. Consulta más tarde.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======== VISTA: IMPRIMIR (SEGURIDAD) ======== -->
+        <section id="view-imprimir" class="section-gap hidden">
+            <div class="card">
+                <div class="card-head">
+                    <div>
+                        <h3>Vista Previa de Impresión</h3>
+                        <p>Hoja de control de retiro de equipos informáticos</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="printSecurityList()">
+                        🖨️ Imprimir Ahora
+                    </button>
+                </div>
+                <div id="print-preview-container"
+                     style="background:#fff; color:#000; border-radius:12px; padding:24px; font-family:Arial,sans-serif; min-height:300px;">
+                    <div id="print-preview-content"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- ===== INCIDENT MODAL ===== -->
+<div id="incident-modal" class="modal-overlay hidden">
+    <div class="modal">
+        <h3>⚠️ Registrar Incidencia</h3>
+        <p>Ingresa el tipo y descripción de la situación con el equipo.</p>
+        <input type="hidden" id="incident-mov-id">
+        <div class="form-group">
+            <label>Tipo de Incidencia</label>
+            <select id="incident-tipo">
+                <option value="Robo">Robo</option>
+                <option value="Pérdida">Pérdida</option>
+                <option value="Daño">Daño físico</option>
+                <option value="No devuelto">No devuelto (plazo vencido)</option>
+                <option value="Otro">Otro</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Descripción detallada</label>
+            <textarea id="incident-desc" rows="3" placeholder="Describe lo ocurrido con el equipo…" style="resize:vertical;"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeIncidentModal()">Cancelar</button>
+            <button class="btn btn-rose" onclick="confirmIncident()">Registrar Incidencia</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== CONFIRM CHECKOUT MODAL ===== -->
+<div id="checkout-modal" class="modal-overlay hidden">
+    <div class="modal">
+        <h3>📤 Registrar Salida</h3>
+        <p id="checkout-modal-desc">Confirma la salida del equipo. Se registrará la hora actual.</p>
+        <input type="hidden" id="checkout-mov-id">
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeCheckoutModal()">Cancelar</button>
+            <button class="btn btn-warning" onclick="confirmCheckout()">Confirmar Salida</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== CONFIRM CHECKIN MODAL ===== -->
+<div id="checkin-modal" class="modal-overlay hidden">
+    <div class="modal">
+        <h3>📥 Registrar Devolución</h3>
+        <p id="checkin-modal-desc">Confirma la devolución del equipo.</p>
+        <input type="hidden" id="checkin-mov-id">
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeCheckinModal()">Cancelar</button>
+            <button class="btn btn-success" onclick="confirmCheckin()">Confirmar Devolución</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div id="toast" class="toast hidden"></div>
+
+<script>
+// ==========================================================================
+//  BASE DE DATOS EN MEMORIA (localStorage)
+//  Estructura:
+//    - asesores: { id, cedula, nombre, serial, modelo, activo }
+//    - movimientos: { id, id_asesor, fecha, hora_salida, fecha_devolucion,
+//                     hora_devolucion, estado, notas, incidencia }
+// ==========================================================================
+
+const DB_ASESORES   = 'fyd_asesores';
+const DB_MOVIMIENTOS= 'fyd_movimientos';
+const SISTEMAS_PIN  = '2026';
+
+// Datos de muestra (se cargan solo la primera vez)
+const SEED_ASESORES = [
+    { id: 1,  cedula: "1720478342", nombre: "NICOLE ANDREA VÁSQUEZ LÓPEZ",   serial: "C9D32ADQ",  modelo: "HP 240 G8",        activo: true },
+    { id: 2,  cedula: "1723776475", nombre: "SANDRA MAYBEL ROSAS GARCÍA",    serial: "F60K3J",    modelo: "Dell Latitude",    activo: true },
+    { id: 3,  cedula: "1712232233", nombre: "ISMAEL JARA AGUILAR",           serial: "C5M4C7DF",  modelo: "Lenovo IdeaPad",   activo: true },
+    { id: 4,  cedula: "1719300556", nombre: "MATEO ANDRÉS PONCE HERRERA",    serial: "DCY5M43D",  modelo: "HP Pavilion 15",   activo: true },
+    { id: 5,  cedula: "1725283344", nombre: "CARLOS MARIO BANCO SOLANO",     serial: "C5M57FD",   modelo: "Asus VivoBook",    activo: true },
+    { id: 6,  cedula: "1729008822", nombre: "LUIS FERNANDO ORTIZ MEDINA",    serial: "XW54881",   modelo: "Lenovo ThinkPad",  activo: true },
+    { id: 7,  cedula: "1765089221", nombre: "MARÍA ISABEL FLORES REYES",     serial: "H58QLMN",   modelo: "Dell Inspiron 15", activo: true },
+    { id: 8,  cedula: "1702340122", nombre: "DIANA CAROLINA RUEDA MORA",     serial: "T9JK2PL",   modelo: "HP 250 G9",        activo: true },
+    { id: 9,  cedula: "1714566789", nombre: "ROBERTO SEBASTIÁN MORA ÁVILA",  serial: "GH44KNM",   modelo: "Acer Aspire 5",    activo: true },
+    { id: 10, cedula: "1798123456", nombre: "VALERIA SOFÍA CASTRO BENAVIDES", serial: "ZX77BRP",  modelo: "HP ProBook",       activo: true },
+];
+
+let db = { asesores: [], movimientos: [] };
+let currentRole = null;
+let selectedAdvisors = new Set(); // IDs seleccionados para salida de hoy
+
+// ============ INIT ============
+function initDB() {
+    const raw_a = localStorage.getItem(DB_ASESORES);
+    const raw_m = localStorage.getItem(DB_MOVIMIENTOS);
+
+    db.asesores    = raw_a ? JSON.parse(raw_a) : SEED_ASESORES;
+    db.movimientos = raw_m ? JSON.parse(raw_m) : [];
+
+    if (!raw_a) saveDB();
+}
+
+function saveDB() {
+    localStorage.setItem(DB_ASESORES,    JSON.stringify(db.asesores));
+    localStorage.setItem(DB_MOVIMIENTOS, JSON.stringify(db.movimientos));
+}
+
+function todayStr() {
+    return new Date().toISOString().split('T')[0];
+}
+
+function todayLabel() {
+    return new Date().toLocaleDateString('es-EC', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
+
+function nowTime() {
+    return new Date().toLocaleTimeString('es-EC', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+
+// ============ SIDEBAR DATE ============
+document.getElementById('sidebar-date').textContent = new Date().toLocaleDateString('es-EC');
+
+// ============ LOGIN ============
+let chosenRole = null;
+
+function selectRole(role) {
+    chosenRole = role;
+    document.querySelectorAll('.role-option').forEach(el => el.classList.remove('selected'));
+    document.getElementById(`role-opt-${role}`).classList.add('selected');
+
+    const pinSec = document.getElementById('pin-section');
+    if (role === 'sistemas') {
+        pinSec.classList.remove('hidden');
+        document.getElementById('pin-input').focus();
+    } else {
+        pinSec.classList.add('hidden');
+    }
+
+    document.getElementById('login-error').classList.add('hidden');
+}
+
+function doLogin() {
+    if (!chosenRole) {
+        showToast('Selecciona un rol antes de continuar.', 'warning');
+        return;
+    }
+
+    if (chosenRole === 'sistemas') {
+        const pin = document.getElementById('pin-input').value.trim();
+        if (pin !== SISTEMAS_PIN) {
+            document.getElementById('login-error').classList.remove('hidden');
+            document.getElementById('pin-input').value = '';
+            document.getElementById('pin-input').focus();
+            return;
+        }
+    }
+
+    currentRole = chosenRole;
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('app-shell').classList.remove('hidden');
+    setupRoleUI();
+}
+
+function logout() {
+    currentRole = null;
+    chosenRole = null;
+    document.getElementById('login-screen').classList.remove('hidden');
+    document.getElementById('app-shell').classList.add('hidden');
+    document.querySelectorAll('.role-option').forEach(el => el.classList.remove('selected'));
+    document.getElementById('pin-section').classList.add('hidden');
+    document.getElementById('pin-input').value = '';
+    document.getElementById('login-error').classList.add('hidden');
+}
+
+function setupRoleUI() {
+    // Hide all nav panels
+    ['lider','sistemas','seguridad'].forEach(r => {
+        document.getElementById(`nav-${r}`).classList.add('hidden');
+    });
+
+    const avatarEl = document.getElementById('sidebar-avatar');
+    const nameEl   = document.getElementById('sidebar-role-name');
+    const labelEl  = document.getElementById('sidebar-role-label');
+
+    if (currentRole === 'lider') {
+        document.getElementById('nav-lider').classList.remove('hidden');
+        avatarEl.textContent = '👩‍💼';
+        avatarEl.className = 'role-avatar avatar-leader';
+        nameEl.textContent  = 'Carolina S.';
+        labelEl.textContent = 'Líder del Área';
+        switchView('asesores');
+    } else if (currentRole === 'sistemas') {
+        document.getElementById('nav-sistemas').classList.remove('hidden');
+        avatarEl.textContent = '🖥️';
+        avatarEl.className = 'role-avatar avatar-sistemas';
+        nameEl.textContent  = 'Sistemas (TI)';
+        labelEl.textContent = 'Acceso total al sistema';
+        switchView('monitor');
+    } else if (currentRole === 'seguridad') {
+        document.getElementById('nav-seguridad').classList.remove('hidden');
+        avatarEl.textContent = '🛡️';
+        avatarEl.className = 'role-avatar avatar-seguridad';
+        nameEl.textContent  = 'Guardia de Seguridad';
+        labelEl.textContent = 'Control de acceso';
+        switchView('lista-seg');
+    }
+}
+
+// ============ VIEW SWITCHER ============
+const VIEW_META = {
+    'asesores':   { title: 'Mis Asesores',                  sub: 'Registra y gestiona el personal con equipo asignado' },
+    'seleccionar':{ title: 'Autorizar Salidas de Hoy',      sub: 'Selecciona quiénes llevan su equipo hoy y confirma la lista' },
+    'historial':  { title: 'Historial de Movimientos',      sub: 'Registro histórico de salidas y devoluciones' },
+    'monitor':    { title: 'Monitor de Equipos',             sub: 'Estado en tiempo real de todos los equipos del área' },
+    'incidencias':{ title: 'Incidencias Registradas',       sub: 'Equipos con situaciones especiales (robo, pérdida, daño)' },
+    'lista-seg':  { title: 'Lista de Salidas — Hoy',        sub: 'Asesores autorizados para retirar equipo hoy' },
+    'imprimir':   { title: 'Hoja de Control para Imprimir', sub: 'Documento oficial con cláusulas y firma del asesor' },
+};
+
+function switchView(viewName) {
+    const allViews = ['asesores','seleccionar','historial','monitor','incidencias','lista-seg','imprimir'];
+    allViews.forEach(v => {
+        const el = document.getElementById(`view-${v}`);
+        if (el) el.classList.add('hidden');
+    });
+
+    const allBtns = document.querySelectorAll('.nav-btn');
+    allBtns.forEach(b => b.classList.remove('active'));
+
+    const target = document.getElementById(`view-${viewName}`);
+    if (target) target.classList.remove('hidden');
+
+    const btnMap = {
+        'asesores':    'btn-view-asesores',
+        'seleccionar': 'btn-view-seleccionar',
+        'historial':   'btn-view-historial',
+        'monitor':     'btn-view-monitor',
+        'incidencias': 'btn-view-incidencias',
+        'lista-seg':   'btn-view-lista-seg',
+        'imprimir':    'btn-view-imprimir',
+    };
+
+    const btnId = btnMap[viewName];
+    if (btnId && document.getElementById(btnId)) {
+        document.getElementById(btnId).classList.add('active');
+    }
+
+    const meta = VIEW_META[viewName] || {};
+    document.getElementById('view-title').textContent    = meta.title || viewName;
+    document.getElementById('view-subtitle').textContent = meta.sub   || '';
+    document.getElementById('header-actions').innerHTML  = '';
+
+    // Load data for each view
+    if (viewName === 'asesores')    loadAsesores();
+    if (viewName === 'seleccionar') loadSeleccion();
+    if (viewName === 'historial')   loadHistorial();
+    if (viewName === 'monitor')     loadMonitor();
+    if (viewName === 'incidencias') loadIncidencias();
+    if (viewName === 'lista-seg')   loadSeguridad();
+    if (viewName === 'imprimir')    buildPrintPreview();
+}
+
+// ============ TOAST ============
+function showToast(msg, type='info') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type}`;
+    t.classList.remove('hidden');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.add('hidden'), 3500);
+}
+
+// ============ ASESORES ============
+// ============ FORM PANEL TOGGLE ============
+function toggleFormPanel() {
+    const panel = document.getElementById('form-panel-wrap');
+    const isOpen = panel.classList.contains('open');
+    panel.classList.toggle('open');
+    // Update subtitle text
+    const subtitle = panel.querySelector('.form-panel-subtitle');
+    subtitle.textContent = isOpen
+        ? 'Haz clic para desplegar el formulario de registro'
+        : 'Completa los campos y haz clic en Registrar';
+}
+
+function loadAsesores(query='') {
+    const tbody = document.getElementById('asesores-tbody');
+    tbody.innerHTML = '';
+
+    let list = db.asesores;
+    if (query) {
+        const q = query.toLowerCase();
+        list = list.filter(a =>
+            a.nombre.toLowerCase().includes(q) ||
+            a.cedula.includes(q) ||
+            a.serial.toLowerCase().includes(q)
+        );
+    }
+
+    document.getElementById('asesor-count-label').textContent =
+        `${db.asesores.length} asesores registrados`;
+    const pill = document.getElementById('asesor-count-pill');
+    if (pill) pill.textContent = `${db.asesores.length} asesores`;
+
+    if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-2);padding:24px;">
+            ${query ? 'No se encontraron resultados.' : 'No hay asesores registrados aún.'}
+        </td></tr>`;
+        return;
+    }
+
+    list.forEach(a => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="font-family:var(--mono); font-size:0.8rem;">${a.cedula}</td>
+            <td><strong>${a.nombre}</strong></td>
+            <td style="font-family:var(--mono); font-size:0.82rem;">${a.serial}</td>
+            <td style="color:var(--text-2); font-size:0.82rem;">${a.modelo || '—'}</td>
+            <td><span class="badge ${a.activo ? 'badge-devuelto' : 'badge-incidencia'}">${a.activo ? 'Activo' : 'Inactivo'}</span></td>
+            <td style="text-align:center; white-space:nowrap;">
+                <button class="btn btn-ghost btn-sm" onclick="toggleActiveAdvisor(${a.id})" title="${a.activo ? 'Desactivar' : 'Activar'}">
+                    ${a.activo ? '⏸️' : '▶️'}
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="deleteAdvisor(${a.id})" style="margin-left:4px;" title="Eliminar">🗑️</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function filterAsesores() {
+    loadAsesores(document.getElementById('search-asesores').value.trim());
+}
+
+function addAdvisor(evt) {
+    evt.preventDefault();
+    const cedula = document.getElementById('adv-cedula').value.trim();
+    const nombre = document.getElementById('adv-nombre').value.trim().toUpperCase();
+    const serial = document.getElementById('adv-serial').value.trim().toUpperCase();
+    const modelo = document.getElementById('adv-modelo').value.trim();
+
+    if (db.asesores.find(a => a.cedula === cedula)) {
+        showToast('Ya existe un asesor con esa cédula.', 'error'); return;
+    }
+    if (db.asesores.find(a => a.serial === serial)) {
+        showToast('Ese número de serie ya está asignado.', 'error'); return;
+    }
+
+    db.asesores.push({ id: Date.now(), cedula, nombre, serial, modelo, activo: true });
+    saveDB();
+    showToast(`${nombre} registrado correctamente.`, 'success');
+    document.getElementById('form-advisor').reset();
+    loadAsesores();
+}
+
+function toggleActiveAdvisor(id) {
+    const a = db.asesores.find(x => x.id === id);
+    if (!a) return;
+    a.activo = !a.activo;
+    saveDB();
+    showToast(`${a.nombre} ${a.activo ? 'activado' : 'desactivado'}.`, a.activo ? 'success' : 'warning');
+    loadAsesores();
+}
+
+function deleteAdvisor(id) {
+    const a = db.asesores.find(x => x.id === id);
+    if (!a) return;
+    if (!confirm(`¿Eliminar a ${a.nombre} del sistema? Se eliminará también su historial.`)) return;
+    db.asesores    = db.asesores.filter(x => x.id !== id);
+    db.movimientos = db.movimientos.filter(m => m.id_asesor !== id);
+    saveDB();
+    showToast('Asesor eliminado.', 'success');
+    loadAsesores();
+}
+
+// ============ SELECCIONAR SALIDAS (LÍDER) ============
+function loadSeleccion(query='') {
+    const today = todayStr();
+    document.getElementById('seleccionar-date-label').textContent =
+        `Hoy: ${todayLabel()}`;
+
+    // ¿Ya existe lista para hoy?
+    const yaConfirmados = db.movimientos.filter(m => m.fecha === today);
+    const yaHayLista = yaConfirmados.length > 0;
+
+    const grid = document.getElementById('seleccion-grid');
+    grid.innerHTML = '';
+
+    let asesores = db.asesores.filter(a => a.activo);
+    if (query) {
+        const q = query.toLowerCase();
+        asesores = asesores.filter(a => a.nombre.toLowerCase().includes(q) || a.cedula.includes(q));
+    }
+
+    if (asesores.length === 0) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+            <div class="empty-icon">👥</div>
+            <h3>Sin asesores activos</h3>
+            <p>Registra asesores en la pestaña "Mis Asesores" primero.</p>
+        </div>`;
+        updateSelCounter();
+        return;
+    }
+
+    if (yaHayLista) {
+        // Mostrar banner informativo
+        grid.innerHTML = `<div class="card" style="grid-column:1/-1; background: rgba(16,185,129,0.1); border-color: var(--green);">
+            <div style="display:flex; align-items:center; gap:16px;">
+                <span style="font-size:2rem;">✅</span>
+                <div>
+                    <div style="font-weight:700; font-size:1rem;">Lista de hoy ya confirmada</div>
+                    <div style="color:var(--text-2); font-size:0.875rem; margin-top:4px;">
+                        Se autorizaron <strong style="color:var(--green);">${yaConfirmados.length}</strong> asesor(es) para llevar equipo hoy.
+                        Puedes ver los detalles en el Historial o modificar la lista.
+                    </div>
+                </div>
+                <div style="margin-left:auto;">
+                    <button class="btn btn-ghost btn-sm" onclick="resetTodayList()">↩️ Modificar Lista</button>
+                </div>
+            </div>
+        </div>`;
+        // Mostrar de todos modos los que salieron
+        yaConfirmados.forEach(m => {
+            const a = db.asesores.find(x => x.id === m.id_asesor);
+            if (!a) return;
+            const card = buildConfirmedCard(a, m);
+            grid.appendChild(card);
+        });
+        return;
+    }
+
+    // Inicializar selectedAdvisors si es primera vez
+    asesores.forEach(a => { /* no preselect */ });
+
+    asesores.forEach(a => {
+        const card = buildSelectionCard(a);
+        grid.appendChild(card);
+    });
+
+    updateSelCounter();
+}
+
+function buildSelectionCard(a) {
+    const card = document.createElement('div');
+    card.className = 'card advisor-card';
+    card.id = `sel-card-${a.id}`;
+    const isSelected = selectedAdvisors.has(a.id);
+    if (isSelected) card.classList.add('selected-card');
+
+    card.innerHTML = `
+        <div class="adv-card-top">
+            <div>
+                <div class="adv-name">${a.nombre}</div>
+                <div class="adv-cedula">CI: ${a.cedula}</div>
+            </div>
+            <span class="badge ${isSelected ? 'badge-seleccionado' : 'badge-en-oficina'}">
+                ${isSelected ? '✓ Seleccionado' : 'Sin seleccionar'}
+            </span>
+        </div>
+        <div class="adv-details">
+            <div class="detail-row">
+                <span>N° de Serie</span>
+                <span>${a.serial}</span>
+            </div>
+            <div class="detail-row">
+                <span>Modelo</span>
+                <span>${a.modelo || '—'}</span>
+            </div>
+        </div>
+        <div class="adv-actions">
+            <button class="btn ${isSelected ? 'btn-danger' : 'btn-primary'} btn-sm"
+                    onclick="toggleSeleccion(${a.id})">
+                ${isSelected ? '✕ Quitar' : '✓ Autorizar salida'}
+            </button>
+        </div>
+    `;
+
+    card.onclick = (e) => {
+        if (e.target.tagName === 'BUTTON') return;
+        toggleSeleccion(a.id);
+    };
+
+    return card;
+}
+
+function buildConfirmedCard(a, m) {
+    const card = document.createElement('div');
+    card.className = 'card advisor-card';
+
+    let badgeClass = 'badge-seleccionado';
+    if (m.estado === 'En Teletrabajo') badgeClass = 'badge-teletrabajo';
+    if (m.estado === 'Devuelto') badgeClass = 'badge-devuelto';
+    if (m.estado === 'Incidencia') badgeClass = 'badge-incidencia';
+
+    card.innerHTML = `
+        <div class="adv-card-top">
+            <div>
+                <div class="adv-name">${a.nombre}</div>
+                <div class="adv-cedula">CI: ${a.cedula}</div>
+            </div>
+            <span class="badge ${badgeClass}">${m.estado}</span>
+        </div>
+        <div class="adv-details">
+            <div class="detail-row"><span>N° Serie</span><span>${a.serial}</span></div>
+            <div class="detail-row"><span>Salida</span><span>${m.hora_salida || '--:--'}</span></div>
+            <div class="detail-row"><span>Devolución</span><span>${m.hora_devolucion || 'Pendiente'}</span></div>
+        </div>
+    `;
+    return card;
+}
+
+function toggleSeleccion(id) {
+    if (selectedAdvisors.has(id)) {
+        selectedAdvisors.delete(id);
+    } else {
+        selectedAdvisors.add(id);
+    }
+    // Re-render solo la tarjeta
+    const a = db.asesores.find(x => x.id === id);
+    if (!a) return;
+    const old = document.getElementById(`sel-card-${id}`);
+    const newCard = buildSelectionCard(a);
+    old.replaceWith(newCard);
+    updateSelCounter();
+}
+
+function updateSelCounter() {
+    document.getElementById('sel-counter').textContent =
+        `${selectedAdvisors.size} seleccionado${selectedAdvisors.size !== 1 ? 's' : ''}`;
+}
+
+function selectAll() {
+    db.asesores.filter(a => a.activo).forEach(a => selectedAdvisors.add(a.id));
+    loadSeleccion(document.getElementById('search-sel').value);
+}
+
+function clearAll() {
+    selectedAdvisors.clear();
+    loadSeleccion(document.getElementById('search-sel').value);
+}
+
+function filterSeleccion() {
+    loadSeleccion(document.getElementById('search-sel').value.trim());
+}
+
+function confirmarSalidas() {
+    if (selectedAdvisors.size === 0) {
+        showToast('Selecciona al menos un asesor antes de confirmar.', 'warning');
+        return;
+    }
+
+    const today = todayStr();
+    const yaExiste = db.movimientos.some(m => m.fecha === today);
+    if (yaExiste) {
+        showToast('La lista de hoy ya fue confirmada. Usa "Modificar Lista" primero.', 'warning');
+        return;
+    }
+
+    if (!confirm(`¿Confirmar que ${selectedAdvisors.size} asesor(es) llevarán equipo hoy?\n\nEsta lista será visible para Sistemas y Seguridad.`)) return;
+
+    selectedAdvisors.forEach(id => {
+        db.movimientos.push({
+            id: Date.now() + Math.random(),
+            id_asesor: id,
+            fecha: today,
+            hora_salida: null,
+            fecha_devolucion: null,
+            hora_devolucion: null,
+            estado: 'Autorizado',
+            notas: '',
+            incidencia: null
+        });
+    });
+
+    saveDB();
+    selectedAdvisors.clear();
+    showToast(`✅ Lista confirmada: ${selectedAdvisors.size + db.movimientos.filter(m=>m.fecha===today).length} equipo(s) autorizados para hoy.`, 'success');
+    loadSeleccion();
+}
+
+function resetTodayList() {
+    if (!confirm('¿Deseas eliminar la lista de hoy y reconfigurarla? Se perderán los registros del día actual.')) return;
+    const today = todayStr();
+    db.movimientos = db.movimientos.filter(m => m.fecha !== today);
+    saveDB();
+    selectedAdvisors.clear();
+    showToast('Lista de hoy eliminada. Puedes volver a configurarla.', 'warning');
+    loadSeleccion();
+}
+
+// ============ HISTORIAL ============
+function loadHistorial() {
+    const tbody = document.getElementById('historial-tbody');
+    tbody.innerHTML = '';
+
+    const fechaFiltro = document.getElementById('historial-fecha').value;
+    let movs = [...db.movimientos].sort((a,b) => b.fecha.localeCompare(a.fecha));
+
+    if (fechaFiltro) {
+        movs = movs.filter(m => m.fecha === fechaFiltro);
+    }
+
+    if (movs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--text-2); padding:24px;">
+            ${fechaFiltro ? 'No hay movimientos para esa fecha.' : 'No hay movimientos registrados.'}
+        </td></tr>`;
+        return;
+    }
+
+    movs.forEach(m => {
+        const a = db.asesores.find(x => x.id === m.id_asesor);
+        if (!a) return;
+
+        let badgeClass = 'badge-seleccionado';
+        if (m.estado === 'En Teletrabajo') badgeClass = 'badge-teletrabajo';
+        if (m.estado === 'Devuelto') badgeClass = 'badge-devuelto';
+        if (m.estado === 'Incidencia') badgeClass = 'badge-incidencia';
+
+        const tr = document.createElement('tr');
+        if (m.incidencia) tr.className = 'incident-row';
+        tr.innerHTML = `
+            <td>${m.fecha}</td>
+            <td><strong>${a.nombre}</strong></td>
+            <td style="font-family:var(--mono); font-size:0.78rem;">${a.cedula}</td>
+            <td style="font-family:var(--mono); font-size:0.78rem;">${a.serial}</td>
+            <td>${m.hora_salida || '—'}</td>
+            <td>${m.fecha_devolucion || '—'}</td>
+            <td>${m.hora_devolucion || '—'}</td>
+            <td><span class="badge ${badgeClass}">${m.estado}</span></td>
+            <td style="color:var(--text-2); font-size:0.78rem; max-width:160px; white-space:pre-wrap;">
+                ${m.incidencia ? `<span style="color:#f87171;">⚠️ ${m.incidencia.tipo}</span>` : (m.notas || '—')}
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function clearHistorialFecha() {
+    document.getElementById('historial-fecha').value = '';
+    loadHistorial();
+}
+
+// ============ MONITOR (SISTEMAS) ============
+let allMonitorMovs = [];
+
+function loadMonitor() {
+    const today = todayStr();
+    document.getElementById('monitor-date-label').textContent = `Hoy: ${todayLabel()}`;
+
+    allMonitorMovs = db.movimientos
+        .filter(m => m.fecha === today)
+        .map(m => ({ ...m, asesor: db.asesores.find(a => a.id === m.id_asesor) }))
+        .filter(m => m.asesor);
+
+    renderMonitorGrid(allMonitorMovs);
+    updateMonitorStats(allMonitorMovs);
+}
+
+function renderMonitorGrid(movs) {
+    const grid = document.getElementById('monitor-grid');
+    grid.innerHTML = '';
+
+    if (movs.length === 0) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+            <div class="empty-icon">📋</div>
+            <h3>Sin lista para hoy</h3>
+            <p>La líder del área no ha autorizado ninguna salida para hoy.</p>
+        </div>`;
+        return;
+    }
+
+    movs.forEach(m => {
+        const a = m.asesor;
+        let badgeClass = 'badge-seleccionado';
+        if (m.estado === 'En Teletrabajo') badgeClass = 'badge-teletrabajo';
+        if (m.estado === 'Devuelto') badgeClass = 'badge-devuelto';
+        if (m.estado === 'Incidencia') badgeClass = 'badge-incidencia';
+
+        const canCheckout  = m.estado === 'Autorizado';
+        const canCheckin   = m.estado === 'En Teletrabajo';
+        const canIncident  = m.estado !== 'Devuelto' && m.estado !== 'Incidencia';
+
+        const card = document.createElement('div');
+        card.className = 'card advisor-card';
+        card.innerHTML = `
+            <div class="adv-card-top">
+                <div>
+                    <div class="adv-name">${a.nombre}</div>
+                    <div class="adv-cedula">CI: ${a.cedula}</div>
+                </div>
+                <span class="badge ${badgeClass}">${m.estado}</span>
+            </div>
+            <div class="adv-details">
+                <div class="detail-row"><span>N° de Serie</span><span>${a.serial}</span></div>
+                <div class="detail-row"><span>Modelo</span><span>${a.modelo || '—'}</span></div>
+                <div class="detail-row"><span>Hora de Salida</span><span>${m.hora_salida || '--:--'}</span></div>
+                <div class="detail-row"><span>Fecha Retorno</span><span>${m.fecha_devolucion || 'Pendiente'}</span></div>
+                <div class="detail-row"><span>Hora Retorno</span><span>${m.hora_devolucion || '--:--'}</span></div>
+            </div>
+            <div class="adv-actions">
+                <button class="btn btn-warning btn-sm" ${canCheckout ? '' : 'disabled'} onclick="openCheckoutModal('${m.id}')">
+                    📤 Salida
+                </button>
+                <button class="btn btn-success btn-sm" ${canCheckin ? '' : 'disabled'} onclick="openCheckinModal('${m.id}')">
+                    📥 Ingreso
+                </button>
+                <button class="btn btn-rose btn-sm" ${canIncident ? '' : 'disabled'} onclick="openIncidentModal('${m.id}')" title="Reportar incidencia">
+                    ⚠️
+                </button>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function updateMonitorStats(movs) {
+    document.getElementById('mon-total').textContent = movs.length;
+    document.getElementById('mon-fuera').textContent = movs.filter(m => m.estado === 'En Teletrabajo').length;
+    document.getElementById('mon-devueltos').textContent = movs.filter(m => m.estado === 'Devuelto').length;
+    document.getElementById('mon-incidencias').textContent = movs.filter(m => m.estado === 'Incidencia').length;
+}
+
+function filterMonitor() {
+    const q = document.getElementById('search-monitor').value.toLowerCase().trim();
+    const estado = document.getElementById('filter-estado').value;
+
+    let filtered = allMonitorMovs;
+    if (q) {
+        filtered = filtered.filter(m =>
+            m.asesor.nombre.toLowerCase().includes(q) ||
+            m.asesor.cedula.includes(q)
+        );
+    }
+    if (estado) {
+        filtered = filtered.filter(m => m.estado === estado);
+    }
+    renderMonitorGrid(filtered);
+}
+
+// ============ CHECKOUT / CHECKIN MODALS ============
+function openCheckoutModal(movId) {
+    const m = db.movimientos.find(x => String(x.id) === String(movId));
+    const a = m ? db.asesores.find(x => x.id === m.id_asesor) : null;
+    if (!m || !a) return;
+
+    document.getElementById('checkout-mov-id').value = movId;
+    document.getElementById('checkout-modal-desc').textContent =
+        `Confirma la salida de ${a.nombre} con el equipo ${a.serial}. Se registrará la hora actual: ${nowTime()}`;
+    document.getElementById('checkout-modal').classList.remove('hidden');
+}
+
+function closeCheckoutModal() {
+    document.getElementById('checkout-modal').classList.add('hidden');
+}
+
+function confirmCheckout() {
+    const movId = document.getElementById('checkout-mov-id').value;
+    const m = db.movimientos.find(x => String(x.id) === String(movId));
+    if (!m) return;
+
+    m.hora_salida = nowTime();
+    m.estado = 'En Teletrabajo';
+    saveDB();
+    closeCheckoutModal();
+    showToast('Salida registrada. Estado: En Teletrabajo.', 'warning');
+    loadMonitor();
+}
+
+function openCheckinModal(movId) {
+    const m = db.movimientos.find(x => String(x.id) === String(movId));
+    const a = m ? db.asesores.find(x => x.id === m.id_asesor) : null;
+    if (!m || !a) return;
+
+    document.getElementById('checkin-mov-id').value = movId;
+    document.getElementById('checkin-modal-desc').textContent =
+        `Confirma la devolución del equipo ${a.serial} por parte de ${a.nombre}. Hora: ${nowTime()}`;
+    document.getElementById('checkin-modal').classList.remove('hidden');
+}
+
+function closeCheckinModal() {
+    document.getElementById('checkin-modal').classList.add('hidden');
+}
+
+function confirmCheckin() {
+    const movId = document.getElementById('checkin-mov-id').value;
+    const m = db.movimientos.find(x => String(x.id) === String(movId));
+    if (!m) return;
+
+    const today = todayStr();
+    m.fecha_devolucion = today;
+    m.hora_devolucion  = nowTime();
+    m.estado = 'Devuelto';
+    saveDB();
+    closeCheckinModal();
+    showToast('✅ Devolución registrada. Equipo en oficina.', 'success');
+    loadMonitor();
+}
+
+// ============ INCIDENT MODAL ============
+function openIncidentModal(movId) {
+    document.getElementById('incident-mov-id').value = movId;
+    document.getElementById('incident-tipo').value = 'Robo';
+    document.getElementById('incident-desc').value = '';
+    document.getElementById('incident-modal').classList.remove('hidden');
+}
+
+function closeIncidentModal() {
+    document.getElementById('incident-modal').classList.add('hidden');
+}
+
+function confirmIncident() {
+    const movId = document.getElementById('incident-mov-id').value;
+    const m = db.movimientos.find(x => String(x.id) === String(movId));
+    if (!m) return;
+
+    const tipo = document.getElementById('incident-tipo').value;
+    const desc = document.getElementById('incident-desc').value.trim();
+
+    if (!desc) { showToast('Describe la incidencia antes de confirmar.', 'warning'); return; }
+
+    m.estado = 'Incidencia';
+    m.incidencia = {
+        tipo,
+        descripcion: desc,
+        reportado_en: `${todayStr()} ${nowTime()}`,
+        reportado_por: currentRole === 'sistemas' ? 'Sistemas (TI)' : 'Seguridad'
+    };
+    saveDB();
+    closeIncidentModal();
+    showToast(`⚠️ Incidencia "${tipo}" registrada correctamente.`, 'error');
+    loadMonitor();
+    loadIncidencias();
+}
+
+// ============ INCIDENCIAS (SISTEMAS) ============
+function loadIncidencias() {
+    const tbody = document.getElementById('incidencias-tbody');
+    tbody.innerHTML = '';
+
+    const incMovs = db.movimientos.filter(m => m.incidencia);
+
+    if (incMovs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-2); padding:24px;">
+            No hay incidencias registradas. ¡Todo está bajo control!
+        </td></tr>`;
+        return;
+    }
+
+    incMovs.sort((a,b) => b.fecha.localeCompare(a.fecha)).forEach(m => {
+        const a = db.asesores.find(x => x.id === m.id_asesor);
+        if (!a) return;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${m.fecha}</td>
+            <td><strong style="color:#f87171;">${a.nombre}</strong></td>
+            <td style="font-family:var(--mono); font-size:0.78rem;">${a.cedula}</td>
+            <td style="font-family:var(--mono); font-size:0.78rem;">${a.serial}</td>
+            <td><span class="badge badge-incidencia">${m.incidencia.tipo}</span></td>
+            <td style="color:var(--text-2); font-size:0.82rem;">${m.incidencia.descripcion}</td>
+            <td style="color:var(--text-2); font-size:0.78rem;">${m.incidencia.reportado_por}<br><small>${m.incidencia.reportado_en}</small></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// ============ SEGURIDAD ============
+function loadSeguridad() {
+    const today = todayStr();
+    document.getElementById('seg-date-label').textContent = `Hoy: ${todayLabel()}`;
+
+    const movs = db.movimientos
+        .filter(m => m.fecha === today)
+        .map(m => ({ ...m, asesor: db.asesores.find(a => a.id === m.id_asesor) }))
+        .filter(m => m.asesor);
+
+    document.getElementById('seg-total').textContent = movs.length;
+    document.getElementById('seg-fuera').textContent = movs.filter(m => m.estado === 'En Teletrabajo').length;
+    document.getElementById('seg-devueltos').textContent = movs.filter(m => m.estado === 'Devuelto').length;
+
+    const grid = document.getElementById('seg-grid');
+    const empty = document.getElementById('seg-empty');
+    grid.innerHTML = '';
+
+    if (movs.length === 0) {
+        empty.classList.remove('hidden');
+        return;
+    }
+
+    empty.classList.add('hidden');
+
+    movs.forEach(m => {
+        const a = m.asesor;
+        let badgeClass = 'badge-seleccionado';
+        if (m.estado === 'En Teletrabajo') badgeClass = 'badge-teletrabajo';
+        if (m.estado === 'Devuelto') badgeClass = 'badge-devuelto';
+        if (m.estado === 'Incidencia') badgeClass = 'badge-incidencia';
+
+        const card = document.createElement('div');
+        card.className = 'card advisor-card';
+        card.innerHTML = `
+            <div class="adv-card-top">
+                <div>
+                    <div class="adv-name">${a.nombre}</div>
+                    <div class="adv-cedula">CI: ${a.cedula}</div>
+                </div>
+                <span class="badge ${badgeClass}">${m.estado}</span>
+            </div>
+            <div class="adv-details">
+                <div class="detail-row"><span>N° de Serie</span><span>${a.serial}</span></div>
+                <div class="detail-row"><span>Modelo</span><span>${a.modelo || '—'}</span></div>
+                <div class="detail-row"><span>Hora Salida</span><span>${m.hora_salida || 'No registrada'}</span></div>
+                <div class="detail-row"><span>Retorno</span><span>${m.hora_devolucion || 'Pendiente'}</span></div>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+// ============ PRINT ============
+function buildPrintHTML() {
+    const today = todayStr();
+    const movs = db.movimientos
+        .filter(m => m.fecha === today)
+        .map(m => ({ ...m, asesor: db.asesores.find(a => a.id === m.id_asesor) }))
+        .filter(m => m.asesor);
+
+    if (movs.length === 0) {
+        return `<div style="text-align:center; padding:40px; color:#555;">
+            No hay asesores autorizados para hoy (${today}). La líder debe confirmar la lista primero.
+        </div>`;
+    }
+
+    const rows = movs.map((m,i) => `
+        <tr>
+            <td style="text-align:center;">${i+1}</td>
+            <td>${m.asesor.nombre}</td>
+            <td style="text-align:center; font-family:monospace;">${m.asesor.cedula}</td>
+            <td style="text-align:center; font-family:monospace; font-size:9px;">${m.asesor.serial}</td>
+            <td>${m.asesor.modelo || '—'}</td>
+            <td class="sign-cell"></td>
+            <td style="text-align:center;">${m.hora_salida || ''}</td>
+            <td class="sign-cell"></td>
+            <td style="text-align:center;">${m.fecha_devolucion || ''}</td>
+            <td style="color:${m.incidencia ? '#c0392b' : 'inherit'}; font-size:9px;">${m.incidencia ? '⚠️ ' + m.incidencia.tipo + (m.incidencia.descripcion ? ': ' + m.incidencia.descripcion : '') : (m.estado === 'Devuelto' ? '✓ Devuelto' : '')}</td>
+        </tr>
+    `).join('');
+
+    return `
+        <div class="print-page">
+            <div class="print-header">
+                <h1>CONTROL DE SALIDA DE EQUIPOS INFORMÁTICOS — TELETRABAJO</h1>
+                <p>FECHA: ${new Date().toLocaleDateString('es-EC', { weekday:'long', year:'numeric', month:'long', day:'numeric' }).toUpperCase()}</p>
+            </div>
+
+            <div class="print-meta">
+                <div><strong>Líder del Área:</strong> Sangucho Carolina</div>
+                <div><strong>Total autorizados:</strong> ${movs.length} asesor(es)</div>
+                <div><strong>Generado:</strong> ${nowTime()}</div>
+            </div>
+
+            <div class="print-clauses">
+                <h3>📋 CLÁUSULAS IMPORTANTES (leer antes de firmar)</h3>
+                <ol>
+                    <li>El equipo entregado es de <strong>uso exclusivo para fines laborales</strong>.</li>
+                    <li>El asesor es responsable de su <strong>cuidado, buen uso y devolución</strong> en las fechas acordadas.</li>
+                    <li>En caso de <strong>pérdida, daño o robo</strong>, el asesor deberá reportar inmediatamente y asumir las responsabilidades correspondientes según el reglamento interno.</li>
+                    <li><strong>No se permitirá</strong> el préstamo o uso del equipo a terceros no autorizados.</li>
+                    <li>Seguridad <strong>solo permitirá la salida</strong> del equipo si el asesor está en la lista autorizada y firma el presente registro.</li>
+                    <li>El equipo debe ser devuelto en las mismas condiciones en que fue entregado. Daños no reportados serán responsabilidad del asesor.</li>
+                </ol>
+            </div>
+
+            <table class="print-table">
+                <thead>
+                    <tr>
+                        <th style="width:24px; text-align:center;">#</th>
+                        <th style="width:12%;">Nombre del Asesor</th>
+                        <th style="width:9%; text-align:center;">Cédula</th>
+                        <th style="width:9%; text-align:center;">N° de Serie</th>
+                        <th style="width:8%;">Modelo</th>
+                        <th style="width:10%; text-align:center;">Firma Salida</th>
+                        <th style="width:7%; text-align:center;">Hora Salida</th>
+                        <th style="width:10%; text-align:center;">Firma Retorno</th>
+                        <th style="width:8%; text-align:center;">Fecha Retorno</th>
+                        <th>Observaciones</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+
+            <div class="print-footer">
+                <p style="margin-bottom:6px;">Documento generado por el Sistema FYD Control de Equipos &nbsp;·&nbsp; ${new Date().toISOString()}</p>
+
+                <div class="sig-row">
+                    <div class="sig-block">
+                        <div class="sig-space"></div>
+                        <div class="sig-line"></div>
+                        <div class="sig-label"><strong>Responsable del Área</strong></div>
+                        <div class="sig-name">Sangucho Carolina</div>
+                    </div>
+                    <div class="sig-block">
+                        <div class="sig-space"></div>
+                        <div class="sig-line"></div>
+                        <div class="sig-label"><strong>Guardia de Seguridad</strong></div>
+                        <div class="sig-name">&nbsp;</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function buildPrintPreview() {
+    document.getElementById('print-preview-content').innerHTML = buildPrintHTML();
+}
+
+function printSecurityList() {
+    // Update preview panel if visible
+    buildPrintPreview();
+
+    // Open a fresh popup window — this is the reliable way to print in Chrome/Edge
+    // when the app is opened as a local file (window.print() on the parent causes blank page)
+    const printWin = window.open('', '_blank', 'width=1050,height=750');
+    if (!printWin) {
+        showToast('El navegador bloqueó la ventana emergente. Permite las ventanas emergentes para este sitio.', 'error');
+        return;
+    }
+
+    const printCSS = `
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, Helvetica, sans-serif; background: #fff; color: #000; padding: 18px; }
+        .print-page { max-width: 100%; }
+
+        /* ENCABEZADO */
+        .print-header { text-align: center; border-bottom: 2.5px solid #1a1a2e; padding-bottom: 12px; margin-bottom: 14px; }
+        .print-header h1 { font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .print-header p { font-size: 10.5px; color: #444; }
+
+        /* META */
+        .print-meta { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 10.5px; border: 1px solid #ccc; border-radius: 4px; padding: 8px 12px; background: #fafafa; }
+
+        /* CLÁUSULAS */
+        .print-clauses { background: #f4f6fa; border: 1px solid #c8d0e0; border-left: 4px solid #1a1a2e; border-radius: 4px; padding: 10px 14px; margin-bottom: 14px; font-size: 10px; }
+        .print-clauses h3 { font-size: 10.5px; font-weight: bold; margin-bottom: 8px; color: #1a1a2e; text-transform: uppercase; letter-spacing: 0.3px; }
+        .print-clauses ol { padding-left: 16px; }
+        .print-clauses ol li { margin-bottom: 4px; line-height: 1.45; }
+
+        /* TABLA — líneas más claras y visibles */
+        table { width: 100%; border-collapse: collapse; font-size: 9.5px; border: 1.5px solid #999; }
+        thead tr th {
+            background: #e8ecf4;
+            color: #1a1a2e;
+            padding: 8px 9px;
+            text-align: left;
+            font-size: 9px;
+            font-weight: bold;
+            letter-spacing: 0.3px;
+            border-right: 1px solid #c0c8d8;
+            border-bottom: 2px solid #1a1a2e;
+        }
+        thead tr th:last-child { border-right: none; }
+        tbody tr td {
+            padding: 9px 9px;
+            border-bottom: 1.5px solid #bbb;
+            border-right: 1px solid #d0d0d0;
+            vertical-align: middle;
+            line-height: 1.4;
+        }
+        tbody tr td:last-child { border-right: none; }
+        tbody tr:nth-child(even) td { background: #f5f7fb; }
+        tbody tr:last-child td { border-bottom: 2px solid #1a1a2e; }
+        .sign-cell { height: 42px; min-width: 85px; }
+
+        /* PIE DE PÁGINA Y FIRMAS */
+        .print-footer {
+            margin-top: 22px;
+            font-size: 9px;
+            color: #666;
+            text-align: center;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
+        .sig-row {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-top: 36px;
+            gap: 60px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .sig-block {
+            flex: 1;
+            text-align: center;
+            max-width: 280px;
+        }
+        /* Espacio en blanco generoso arriba para poder firmar */
+        .sig-space { height: 65px; }
+        .sig-line {
+            border-top: 1.5px solid #222;
+            width: 95%;
+            margin: 0 auto 8px;
+        }
+        .sig-label {
+            font-size: 11px;
+            color: #111;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .sig-name {
+            font-size: 10px;
+            color: #333;
+            margin-top: 3px;
+        }
+
+        @media print {
+            body { padding: 8px; }
+            @page { margin: 1.2cm; }
+        }
+    `;
+
+    printWin.document.write(`<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Control de Equipos — Hoja de Registro</title>
+    <style>${printCSS}</style>
+</head>
+<body>
+    ${buildPrintHTML()}
+    <script>
+        window.onload = function() {
+            setTimeout(function() { window.print(); }, 300);
+        };
+    <\/script>
+</body>
+</html>`);
+    printWin.document.close();
+}
+
+// ============ KEYBOARD SHORTCUTS ============
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        closeIncidentModal();
+        closeCheckoutModal();
+        closeCheckinModal();
+    }
+    if (e.key === 'Enter' && !document.getElementById('login-screen').classList.contains('hidden')) {
+        doLogin();
+    }
+});
+
+// ============ STARTUP ============
+initDB();
+
+// Set today date on history filter
+document.getElementById('historial-fecha').value = todayStr();
+</script>
+</body>
+</html>
