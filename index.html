@@ -1263,61 +1263,46 @@
 <!-- ===== TOAST ===== -->
 <div id="toast" class="toast hidden"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ==========================================================================
-//  BASE DE DATOS EN MEMORIA (localStorage)
-//  Estructura:
-//    - asesores: { id, cedula, nombre, serial, modelo, activo }
-//    - movimientos: { id, id_asesor, fecha, hora_salida, fecha_devolucion,
-//                     hora_devolucion, estado, notas, incidencia }
+//  SUPABASE — Base de datos en la nube
 // ==========================================================================
+const SUPABASE_URL = 'https://cxivbqqdfolskmbjcpij.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_qwo1HsWUxjJ4uiNctZmd4A_Tw_AzKcS';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const DB_ASESORES   = 'fyd_asesores';
-const DB_MOVIMIENTOS= 'fyd_movimientos';
-const SISTEMAS_PIN  = '2026';
+const SISTEMAS_PIN = '2026';
 
-// Datos de muestra (se cargan solo la primera vez)
-const SEED_ASESORES = [
-    { id: 1,  cedula: "1720478342", nombre: "NICOLE ANDREA VÁSQUEZ LÓPEZ",   serial: "C9D32ADQ",  modelo: "HP 240 G8",        activo: true },
-    { id: 2,  cedula: "1723776475", nombre: "SANDRA MAYBEL ROSAS GARCÍA",    serial: "F60K3J",    modelo: "Dell Latitude",    activo: true },
-    { id: 3,  cedula: "1712232233", nombre: "ISMAEL JARA AGUILAR",           serial: "C5M4C7DF",  modelo: "Lenovo IdeaPad",   activo: true },
-    { id: 4,  cedula: "1719300556", nombre: "MATEO ANDRÉS PONCE HERRERA",    serial: "DCY5M43D",  modelo: "HP Pavilion 15",   activo: true },
-    { id: 5,  cedula: "1725283344", nombre: "CARLOS MARIO BANCO SOLANO",     serial: "C5M57FD",   modelo: "Asus VivoBook",    activo: true },
-    { id: 6,  cedula: "1729008822", nombre: "LUIS FERNANDO ORTIZ MEDINA",    serial: "XW54881",   modelo: "Lenovo ThinkPad",  activo: true },
-    { id: 7,  cedula: "1765089221", nombre: "MARÍA ISABEL FLORES REYES",     serial: "H58QLMN",   modelo: "Dell Inspiron 15", activo: true },
-    { id: 8,  cedula: "1702340122", nombre: "DIANA CAROLINA RUEDA MORA",     serial: "T9JK2PL",   modelo: "HP 250 G9",        activo: true },
-    { id: 9,  cedula: "1714566789", nombre: "ROBERTO SEBASTIÁN MORA ÁVILA",  serial: "GH44KNM",   modelo: "Acer Aspire 5",    activo: true },
-    { id: 10, cedula: "1798123456", nombre: "VALERIA SOFÍA CASTRO BENAVIDES", serial: "ZX77BRP",  modelo: "HP ProBook",       activo: true },
-];
-
+// Cache local (para operaciones de lectura sincrónica en UI)
 let db = { asesores: [], movimientos: [] };
 let currentRole = null;
-let selectedAdvisors = new Set(); // IDs seleccionados para salida de hoy
+let selectedAdvisors = new Set();
 
 // ============ INIT ============
-function initDB() {
-    const raw_a = localStorage.getItem(DB_ASESORES);
-    const raw_m = localStorage.getItem(DB_MOVIMIENTOS);
-
-    db.asesores    = raw_a ? JSON.parse(raw_a) : SEED_ASESORES;
-    db.movimientos = raw_m ? JSON.parse(raw_m) : [];
-
-    if (!raw_a) saveDB();
-}
-
-function saveDB() {
-    localStorage.setItem(DB_ASESORES,    JSON.stringify(db.asesores));
-    localStorage.setItem(DB_MOVIMIENTOS, JSON.stringify(db.movimientos));
+async function initDB() {
+    try {
+        const [{ data: asesores, error: errA }, { data: movs, error: errM }] = await Promise.all([
+            sb.from('asesores').select('*').order('nombre'),
+            sb.from('movimientos').select('*').order('created_at', { ascending: false })
+        ]);
+        if (errA) throw errA;
+        if (errM) throw errM;
+        db.asesores    = asesores    || [];
+        db.movimientos = movs        || [];
+        showToast('Conectado a la base de datos ☁️', 'success');
+    } catch(e) {
+        console.error('Supabase init error:', e);
+        showToast('Error de conexión. Revisa la consola.', 'error');
+    }
 }
 
 function todayStr() {
     return new Date().toISOString().split('T')[0];
 }
-
 function todayLabel() {
     return new Date().toLocaleDateString('es-EC', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 }
-
 function nowTime() {
     return new Date().toLocaleTimeString('es-EC', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
 }
@@ -1488,9 +1473,13 @@ function toggleFormPanel() {
         : 'Completa los campos y haz clic en Registrar';
 }
 
-function loadAsesores(query='') {
+async function loadAsesores(query='') {
     const tbody = document.getElementById('asesores-tbody');
-    tbody.innerHTML = '';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-2); padding:24px;">Cargando…</td></tr>';
+
+    const { data, error } = await sb.from('asesores').select('*').order('nombre');
+    if (error) { showToast('Error cargando asesores: ' + error.message, 'error'); return; }
+    db.asesores = data || [];
 
     let list = db.asesores;
     if (query) {
@@ -1502,11 +1491,11 @@ function loadAsesores(query='') {
         );
     }
 
-    document.getElementById('asesor-count-label').textContent =
-        `${db.asesores.length} asesores registrados`;
+    document.getElementById('asesor-count-label').textContent = `${db.asesores.length} asesores registrados`;
     const pill = document.getElementById('asesor-count-pill');
     if (pill) pill.textContent = `${db.asesores.length} asesores`;
 
+    tbody.innerHTML = '';
     if (list.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-2);padding:24px;">
             ${query ? 'No se encontraron resultados.' : 'No hay asesores registrados aún.'}
@@ -1537,61 +1526,66 @@ function filterAsesores() {
     loadAsesores(document.getElementById('search-asesores').value.trim());
 }
 
-function addAdvisor(evt) {
+async function addAdvisor(evt) {
     evt.preventDefault();
     const cedula = document.getElementById('adv-cedula').value.trim();
     const nombre = document.getElementById('adv-nombre').value.trim().toUpperCase();
     const serial = document.getElementById('adv-serial').value.trim().toUpperCase();
     const modelo = document.getElementById('adv-modelo').value.trim();
 
-    if (db.asesores.find(a => a.cedula === cedula)) {
-        showToast('Ya existe un asesor con esa cédula.', 'error'); return;
+    const { error } = await sb.from('asesores').insert({ cedula, nombre, serial, modelo, activo: true });
+    if (error) {
+        if (error.code === '23505') {
+            showToast('Ya existe un asesor con esa cédula o número de serie.', 'error');
+        } else {
+            showToast('Error al registrar: ' + error.message, 'error');
+        }
+        return;
     }
-    if (db.asesores.find(a => a.serial === serial)) {
-        showToast('Ese número de serie ya está asignado.', 'error'); return;
-    }
-
-    db.asesores.push({ id: Date.now(), cedula, nombre, serial, modelo, activo: true });
-    saveDB();
     showToast(`${nombre} registrado correctamente.`, 'success');
     document.getElementById('form-advisor').reset();
     loadAsesores();
 }
 
-function toggleActiveAdvisor(id) {
+async function toggleActiveAdvisor(id) {
     const a = db.asesores.find(x => x.id === id);
     if (!a) return;
-    a.activo = !a.activo;
-    saveDB();
-    showToast(`${a.nombre} ${a.activo ? 'activado' : 'desactivado'}.`, a.activo ? 'success' : 'warning');
+    const { error } = await sb.from('asesores').update({ activo: !a.activo }).eq('id', id);
+    if (error) { showToast('Error al actualizar: ' + error.message, 'error'); return; }
+    showToast(`${a.nombre} ${!a.activo ? 'activado' : 'desactivado'}.`, !a.activo ? 'success' : 'warning');
     loadAsesores();
 }
 
-function deleteAdvisor(id) {
+async function deleteAdvisor(id) {
     const a = db.asesores.find(x => x.id === id);
     if (!a) return;
     if (!confirm(`¿Eliminar a ${a.nombre} del sistema? Se eliminará también su historial.`)) return;
-    db.asesores    = db.asesores.filter(x => x.id !== id);
-    db.movimientos = db.movimientos.filter(m => m.id_asesor !== id);
-    saveDB();
+    const { error } = await sb.from('asesores').delete().eq('id', id);
+    if (error) { showToast('Error al eliminar: ' + error.message, 'error'); return; }
     showToast('Asesor eliminado.', 'success');
     loadAsesores();
 }
 
 // ============ SELECCIONAR SALIDAS (LÍDER) ============
-function loadSeleccion(query='') {
+async function loadSeleccion(query='') {
     const today = todayStr();
-    document.getElementById('seleccionar-date-label').textContent =
-        `Hoy: ${todayLabel()}`;
+    document.getElementById('seleccionar-date-label').textContent = `Hoy: ${todayLabel()}`;
 
-    // ¿Ya existe lista para hoy?
+    // Cargar datos frescos de Supabase
+    const [{ data: asesoresData }, { data: movsData }] = await Promise.all([
+        sb.from('asesores').select('*').eq('activo', true).order('nombre'),
+        sb.from('movimientos').select('*').eq('fecha', today)
+    ]);
+    db.asesores    = asesoresData || [];
+    db.movimientos = movsData     || [];
+
     const yaConfirmados = db.movimientos.filter(m => m.fecha === today);
-    const yaHayLista = yaConfirmados.length > 0;
+    const yaHayLista    = yaConfirmados.length > 0;
 
     const grid = document.getElementById('seleccion-grid');
     grid.innerHTML = '';
 
-    let asesores = db.asesores.filter(a => a.activo);
+    let asesores = db.asesores;
     if (query) {
         const q = query.toLowerCase();
         asesores = asesores.filter(a => a.nombre.toLowerCase().includes(q) || a.cedula.includes(q));
@@ -1608,7 +1602,6 @@ function loadSeleccion(query='') {
     }
 
     if (yaHayLista) {
-        // Mostrar banner informativo
         grid.innerHTML = `<div class="card" style="grid-column:1/-1; background: rgba(16,185,129,0.1); border-color: var(--green);">
             <div style="display:flex; align-items:center; gap:16px;">
                 <span style="font-size:2rem;">✅</span>
@@ -1616,7 +1609,6 @@ function loadSeleccion(query='') {
                     <div style="font-weight:700; font-size:1rem;">Lista de hoy ya confirmada</div>
                     <div style="color:var(--text-2); font-size:0.875rem; margin-top:4px;">
                         Se autorizaron <strong style="color:var(--green);">${yaConfirmados.length}</strong> asesor(es) para llevar equipo hoy.
-                        Puedes ver los detalles en el Historial o modificar la lista.
                     </div>
                 </div>
                 <div style="margin-left:auto;">
@@ -1624,7 +1616,6 @@ function loadSeleccion(query='') {
                 </div>
             </div>
         </div>`;
-        // Mostrar de todos modos los que salieron
         yaConfirmados.forEach(m => {
             const a = db.asesores.find(x => x.id === m.id_asesor);
             if (!a) return;
@@ -1634,14 +1625,10 @@ function loadSeleccion(query='') {
         return;
     }
 
-    // Inicializar selectedAdvisors si es primera vez
-    asesores.forEach(a => { /* no preselect */ });
-
     asesores.forEach(a => {
         const card = buildSelectionCard(a);
         grid.appendChild(card);
     });
-
     updateSelCounter();
 }
 
@@ -1720,7 +1707,6 @@ function toggleSeleccion(id) {
     } else {
         selectedAdvisors.add(id);
     }
-    // Re-render solo la tarjeta
     const a = db.asesores.find(x => x.id === id);
     if (!a) return;
     const old = document.getElementById(`sel-card-${id}`);
@@ -1748,64 +1734,55 @@ function filterSeleccion() {
     loadSeleccion(document.getElementById('search-sel').value.trim());
 }
 
-function confirmarSalidas() {
+async function confirmarSalidas() {
     if (selectedAdvisors.size === 0) {
         showToast('Selecciona al menos un asesor antes de confirmar.', 'warning');
         return;
     }
-
     const today = todayStr();
-    const yaExiste = db.movimientos.some(m => m.fecha === today);
-    if (yaExiste) {
+    const { data: existing } = await sb.from('movimientos').select('id').eq('fecha', today).limit(1);
+    if (existing && existing.length > 0) {
         showToast('La lista de hoy ya fue confirmada. Usa "Modificar Lista" primero.', 'warning');
         return;
     }
-
     if (!confirm(`¿Confirmar que ${selectedAdvisors.size} asesor(es) llevarán equipo hoy?\n\nEsta lista será visible para Sistemas y Seguridad.`)) return;
 
-    selectedAdvisors.forEach(id => {
-        db.movimientos.push({
-            id: Date.now() + Math.random(),
-            id_asesor: id,
-            fecha: today,
-            hora_salida: null,
-            fecha_devolucion: null,
-            hora_devolucion: null,
-            estado: 'Autorizado',
-            notas: '',
-            incidencia: null
-        });
-    });
+    const inserts = [...selectedAdvisors].map(id => ({
+        id_asesor: id, fecha: today, estado: 'Autorizado',
+        hora_salida: null, fecha_devolucion: null, hora_devolucion: null, notas: '', incidencia: null
+    }));
+    const { error } = await sb.from('movimientos').insert(inserts);
+    if (error) { showToast('Error al guardar: ' + error.message, 'error'); return; }
 
-    saveDB();
     selectedAdvisors.clear();
-    showToast(`✅ Lista confirmada: ${selectedAdvisors.size + db.movimientos.filter(m=>m.fecha===today).length} equipo(s) autorizados para hoy.`, 'success');
+    showToast(`✅ Lista confirmada: ${inserts.length} equipo(s) autorizados para hoy.`, 'success');
     loadSeleccion();
 }
 
-function resetTodayList() {
+async function resetTodayList() {
     if (!confirm('¿Deseas eliminar la lista de hoy y reconfigurarla? Se perderán los registros del día actual.')) return;
     const today = todayStr();
-    db.movimientos = db.movimientos.filter(m => m.fecha !== today);
-    saveDB();
+    const { error } = await sb.from('movimientos').delete().eq('fecha', today);
+    if (error) { showToast('Error al eliminar lista: ' + error.message, 'error'); return; }
     selectedAdvisors.clear();
     showToast('Lista de hoy eliminada. Puedes volver a configurarla.', 'warning');
     loadSeleccion();
 }
 
 // ============ HISTORIAL ============
-function loadHistorial() {
+async function loadHistorial() {
     const tbody = document.getElementById('historial-tbody');
-    tbody.innerHTML = '';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:var(--text-2); padding:24px;">Cargando…</td></tr>';
 
     const fechaFiltro = document.getElementById('historial-fecha').value;
-    let movs = [...db.movimientos].sort((a,b) => b.fecha.localeCompare(a.fecha));
+    let query = sb.from('movimientos').select('*, asesores(*)').order('fecha', { ascending: false }).order('created_at', { ascending: false });
+    if (fechaFiltro) query = query.eq('fecha', fechaFiltro);
 
-    if (fechaFiltro) {
-        movs = movs.filter(m => m.fecha === fechaFiltro);
-    }
+    const { data: movs, error } = await query;
+    if (error) { showToast('Error cargando historial: ' + error.message, 'error'); return; }
 
-    if (movs.length === 0) {
+    tbody.innerHTML = '';
+    if (!movs || movs.length === 0) {
         tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--text-2); padding:24px;">
             ${fechaFiltro ? 'No hay movimientos para esa fecha.' : 'No hay movimientos registrados.'}
         </td></tr>`;
@@ -1813,14 +1790,12 @@ function loadHistorial() {
     }
 
     movs.forEach(m => {
-        const a = db.asesores.find(x => x.id === m.id_asesor);
+        const a = m.asesores;
         if (!a) return;
-
         let badgeClass = 'badge-seleccionado';
         if (m.estado === 'En Teletrabajo') badgeClass = 'badge-teletrabajo';
         if (m.estado === 'Devuelto') badgeClass = 'badge-devuelto';
         if (m.estado === 'Incidencia') badgeClass = 'badge-incidencia';
-
         const tr = document.createElement('tr');
         if (m.incidencia) tr.className = 'incident-row';
         tr.innerHTML = `
@@ -1848,14 +1823,17 @@ function clearHistorialFecha() {
 // ============ MONITOR (SISTEMAS) ============
 let allMonitorMovs = [];
 
-function loadMonitor() {
+async function loadMonitor() {
     const today = todayStr();
     document.getElementById('monitor-date-label').textContent = `Hoy: ${todayLabel()}`;
 
-    allMonitorMovs = db.movimientos
-        .filter(m => m.fecha === today)
-        .map(m => ({ ...m, asesor: db.asesores.find(a => a.id === m.id_asesor) }))
-        .filter(m => m.asesor);
+    const { data, error } = await sb.from('movimientos').select('*, asesores(*)').eq('fecha', today);
+    if (error) { showToast('Error en monitor: ' + error.message, 'error'); return; }
+
+    allMonitorMovs = (data || []).map(m => ({ ...m, asesor: m.asesores })).filter(m => m.asesor);
+    // Sync local cache for modal lookups
+    db.movimientos = data || [];
+    db.asesores    = allMonitorMovs.map(m => m.asesor);
 
     renderMonitorGrid(allMonitorMovs);
     updateMonitorStats(allMonitorMovs);
@@ -1944,10 +1922,9 @@ function filterMonitor() {
 
 // ============ CHECKOUT / CHECKIN MODALS ============
 function openCheckoutModal(movId) {
-    const m = db.movimientos.find(x => String(x.id) === String(movId));
-    const a = m ? db.asesores.find(x => x.id === m.id_asesor) : null;
+    const m = allMonitorMovs.find(x => String(x.id) === String(movId));
+    const a = m ? m.asesor : null;
     if (!m || !a) return;
-
     document.getElementById('checkout-mov-id').value = movId;
     document.getElementById('checkout-modal-desc').textContent =
         `Confirma la salida de ${a.nombre} con el equipo ${a.serial}. Se registrará la hora actual: ${nowTime()}`;
@@ -1958,24 +1935,19 @@ function closeCheckoutModal() {
     document.getElementById('checkout-modal').classList.add('hidden');
 }
 
-function confirmCheckout() {
+async function confirmCheckout() {
     const movId = document.getElementById('checkout-mov-id').value;
-    const m = db.movimientos.find(x => String(x.id) === String(movId));
-    if (!m) return;
-
-    m.hora_salida = nowTime();
-    m.estado = 'En Teletrabajo';
-    saveDB();
+    const { error } = await sb.from('movimientos').update({ hora_salida: nowTime(), estado: 'En Teletrabajo' }).eq('id', movId);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
     closeCheckoutModal();
     showToast('Salida registrada. Estado: En Teletrabajo.', 'warning');
     loadMonitor();
 }
 
 function openCheckinModal(movId) {
-    const m = db.movimientos.find(x => String(x.id) === String(movId));
-    const a = m ? db.asesores.find(x => x.id === m.id_asesor) : null;
+    const m = allMonitorMovs.find(x => String(x.id) === String(movId));
+    const a = m ? m.asesor : null;
     if (!m || !a) return;
-
     document.getElementById('checkin-mov-id').value = movId;
     document.getElementById('checkin-modal-desc').textContent =
         `Confirma la devolución del equipo ${a.serial} por parte de ${a.nombre}. Hora: ${nowTime()}`;
@@ -1986,16 +1958,12 @@ function closeCheckinModal() {
     document.getElementById('checkin-modal').classList.add('hidden');
 }
 
-function confirmCheckin() {
+async function confirmCheckin() {
     const movId = document.getElementById('checkin-mov-id').value;
-    const m = db.movimientos.find(x => String(x.id) === String(movId));
-    if (!m) return;
-
-    const today = todayStr();
-    m.fecha_devolucion = today;
-    m.hora_devolucion  = nowTime();
-    m.estado = 'Devuelto';
-    saveDB();
+    const { error } = await sb.from('movimientos').update({
+        fecha_devolucion: todayStr(), hora_devolucion: nowTime(), estado: 'Devuelto'
+    }).eq('id', movId);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
     closeCheckinModal();
     showToast('✅ Devolución registrada. Equipo en oficina.', 'success');
     loadMonitor();
@@ -2013,24 +1981,19 @@ function closeIncidentModal() {
     document.getElementById('incident-modal').classList.add('hidden');
 }
 
-function confirmIncident() {
-    const movId = document.getElementById('incident-mov-id').value;
-    const m = db.movimientos.find(x => String(x.id) === String(movId));
-    if (!m) return;
-
-    const tipo = document.getElementById('incident-tipo').value;
-    const desc = document.getElementById('incident-desc').value.trim();
-
+async function confirmIncident() {
+    const movId  = document.getElementById('incident-mov-id').value;
+    const tipo   = document.getElementById('incident-tipo').value;
+    const desc   = document.getElementById('incident-desc').value.trim();
     if (!desc) { showToast('Describe la incidencia antes de confirmar.', 'warning'); return; }
 
-    m.estado = 'Incidencia';
-    m.incidencia = {
-        tipo,
-        descripcion: desc,
+    const incidencia = {
+        tipo, descripcion: desc,
         reportado_en: `${todayStr()} ${nowTime()}`,
         reportado_por: currentRole === 'sistemas' ? 'Sistemas (TI)' : 'Seguridad'
     };
-    saveDB();
+    const { error } = await sb.from('movimientos').update({ estado: 'Incidencia', incidencia }).eq('id', movId);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
     closeIncidentModal();
     showToast(`⚠️ Incidencia "${tipo}" registrada correctamente.`, 'error');
     loadMonitor();
@@ -2038,22 +2001,24 @@ function confirmIncident() {
 }
 
 // ============ INCIDENCIAS (SISTEMAS) ============
-function loadIncidencias() {
+async function loadIncidencias() {
     const tbody = document.getElementById('incidencias-tbody');
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-2); padding:24px;">Cargando…</td></tr>';
+
+    const { data, error } = await sb.from('movimientos').select('*, asesores(*)').not('incidencia', 'is', null).order('fecha', { ascending: false });
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+
     tbody.innerHTML = '';
-
-    const incMovs = db.movimientos.filter(m => m.incidencia);
-
-    if (incMovs.length === 0) {
+    if (!data || data.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-2); padding:24px;">
             No hay incidencias registradas. ¡Todo está bajo control!
         </td></tr>`;
         return;
     }
 
-    incMovs.sort((a,b) => b.fecha.localeCompare(a.fecha)).forEach(m => {
-        const a = db.asesores.find(x => x.id === m.id_asesor);
-        if (!a) return;
+    data.forEach(m => {
+        const a = m.asesores;
+        if (!a || !m.incidencia) return;
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${m.fecha}</td>
@@ -2069,28 +2034,23 @@ function loadIncidencias() {
 }
 
 // ============ SEGURIDAD ============
-function loadSeguridad() {
+async function loadSeguridad() {
     const today = todayStr();
     document.getElementById('seg-date-label').textContent = `Hoy: ${todayLabel()}`;
 
-    const movs = db.movimientos
-        .filter(m => m.fecha === today)
-        .map(m => ({ ...m, asesor: db.asesores.find(a => a.id === m.id_asesor) }))
-        .filter(m => m.asesor);
+    const { data, error } = await sb.from('movimientos').select('*, asesores(*)').eq('fecha', today);
+    if (error) { showToast('Error: ' + error.message, 'error'); return; }
 
-    document.getElementById('seg-total').textContent = movs.length;
-    document.getElementById('seg-fuera').textContent = movs.filter(m => m.estado === 'En Teletrabajo').length;
-    document.getElementById('seg-devueltos').textContent = movs.filter(m => m.estado === 'Devuelto').length;
+    const movs = (data || []).map(m => ({ ...m, asesor: m.asesores })).filter(m => m.asesor);
+    document.getElementById('seg-total').textContent      = movs.length;
+    document.getElementById('seg-fuera').textContent      = movs.filter(m => m.estado === 'En Teletrabajo').length;
+    document.getElementById('seg-devueltos').textContent  = movs.filter(m => m.estado === 'Devuelto').length;
 
-    const grid = document.getElementById('seg-grid');
+    const grid  = document.getElementById('seg-grid');
     const empty = document.getElementById('seg-empty');
     grid.innerHTML = '';
 
-    if (movs.length === 0) {
-        empty.classList.remove('hidden');
-        return;
-    }
-
+    if (movs.length === 0) { empty.classList.remove('hidden'); return; }
     empty.classList.add('hidden');
 
     movs.forEach(m => {
@@ -2099,7 +2059,6 @@ function loadSeguridad() {
         if (m.estado === 'En Teletrabajo') badgeClass = 'badge-teletrabajo';
         if (m.estado === 'Devuelto') badgeClass = 'badge-devuelto';
         if (m.estado === 'Incidencia') badgeClass = 'badge-incidencia';
-
         const card = document.createElement('div');
         card.className = 'card advisor-card';
         card.innerHTML = `
@@ -2124,10 +2083,9 @@ function loadSeguridad() {
 // ============ PRINT ============
 function buildPrintHTML() {
     const today = todayStr();
-    const movs = db.movimientos
-        .filter(m => m.fecha === today)
-        .map(m => ({ ...m, asesor: db.asesores.find(a => a.id === m.id_asesor) }))
-        .filter(m => m.asesor);
+    const movs = allMonitorMovs.length > 0
+        ? allMonitorMovs.filter(m => m.fecha === today)
+        : [];
 
     if (movs.length === 0) {
         return `<div style="text-align:center; padding:40px; color:#555;">
@@ -2357,10 +2315,11 @@ document.addEventListener('keydown', e => {
 });
 
 // ============ STARTUP ============
-initDB();
-
-// Set today date on history filter
+document.getElementById('sidebar-date').textContent = new Date().toLocaleDateString('es-EC');
 document.getElementById('historial-fecha').value = todayStr();
+
+// Inicializar Supabase al cargar
+initDB();
 </script>
 </body>
 </html>
