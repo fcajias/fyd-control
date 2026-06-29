@@ -914,7 +914,7 @@
         </button>
 
         <div class="sidebar-footer">
-            FYD Control v2.0 · Local Mode<br>
+            FYD Control v2.0 · ☁️ Supabase<br>
             <span id="sidebar-date"></span>
         </div>
     </aside>
@@ -1278,6 +1278,7 @@ const SISTEMAS_PIN = '2026';
 let db = { asesores: [], movimientos: [] };
 let currentRole = null;
 let selectedAdvisors = new Set();
+let editMode = false; // true cuando se está modificando una lista ya confirmada
 
 // ============ INIT ============
 async function initDB() {
@@ -1601,7 +1602,8 @@ async function loadSeleccion(query='') {
         return;
     }
 
-    if (yaHayLista) {
+    // --- MODO NORMAL: lista ya confirmada, mostrar resumen ---
+    if (yaHayLista && !editMode) {
         grid.innerHTML = `<div class="card" style="grid-column:1/-1; background: rgba(16,185,129,0.1); border-color: var(--green);">
             <div style="display:flex; align-items:center; gap:16px;">
                 <span style="font-size:2rem;">✅</span>
@@ -1612,7 +1614,7 @@ async function loadSeleccion(query='') {
                     </div>
                 </div>
                 <div style="margin-left:auto;">
-                    <button class="btn btn-ghost btn-sm" onclick="resetTodayList()">↩️ Modificar Lista</button>
+                    <button class="btn btn-primary btn-sm" onclick="enterEditMode()">✏️ Agregar / Modificar</button>
                 </div>
             </div>
         </div>`;
@@ -1625,19 +1627,56 @@ async function loadSeleccion(query='') {
         return;
     }
 
+    // --- MODO EDICIÓN: pre-seleccionar los ya confirmados ---
+    if (yaHayLista && editMode) {
+        const confirmedIds = new Set(yaConfirmados.map(m => m.id_asesor));
+        // Pre-seleccionar los que ya están confirmados (sin sobreescribir selecciones manuales)
+        confirmedIds.forEach(id => selectedAdvisors.add(id));
+
+        // Banner de modo edición
+        grid.innerHTML = `<div class="card" style="grid-column:1/-1; background: rgba(234,179,8,0.1); border-color: #eab308; border-left: 4px solid #eab308;">
+            <div style="display:flex; align-items:center; gap:14px;">
+                <span style="font-size:2rem;">✏️</span>
+                <div>
+                    <div style="font-weight:700; font-size:1rem; color:#eab308;">Modo Edición — Agrega o quita asesores</div>
+                    <div style="color:var(--text-2); font-size:0.85rem; margin-top:3px;">
+                        Los <strong style="color:var(--green);">marcados en verde</strong> ya están confirmados. Solo selecciona los que faltan y confirma.
+                    </div>
+                </div>
+                <div style="margin-left:auto; display:flex; gap:8px;">
+                    <button class="btn btn-ghost btn-sm" onclick="cancelEditMode()">❌ Cancelar</button>
+                </div>
+            </div>
+        </div>`;
+
+        // Mostrar todos los asesores (confirmados como pre-seleccionados)
+        asesores.forEach(a => {
+            const card = buildSelectionCard(a, confirmedIds.has(a.id));
+            grid.appendChild(card);
+        });
+        updateSelCounter();
+        return;
+    }
+
+    // --- MODO INICIAL: ninguna lista para hoy ---
     asesores.forEach(a => {
-        const card = buildSelectionCard(a);
+        const card = buildSelectionCard(a, false);
         grid.appendChild(card);
     });
     updateSelCounter();
 }
 
-function buildSelectionCard(a) {
+function buildSelectionCard(a, isConfirmed = false) {
     const card = document.createElement('div');
     card.className = 'card advisor-card';
     card.id = `sel-card-${a.id}`;
     const isSelected = selectedAdvisors.has(a.id);
     if (isSelected) card.classList.add('selected-card');
+
+    // Estilo especial para los ya confirmados en modo edición
+    const confirmedBadge = isConfirmed
+        ? `<span class="badge badge-devuelto" style="font-size:0.7rem;">✓ Ya en lista</span>`
+        : '';
 
     card.innerHTML = `
         <div class="adv-card-top">
@@ -1645,9 +1684,12 @@ function buildSelectionCard(a) {
                 <div class="adv-name">${a.nombre}</div>
                 <div class="adv-cedula">CI: ${a.cedula}</div>
             </div>
-            <span class="badge ${isSelected ? 'badge-seleccionado' : 'badge-en-oficina'}">
-                ${isSelected ? '✓ Seleccionado' : 'Sin seleccionar'}
-            </span>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                ${confirmedBadge}
+                <span class="badge ${isSelected ? 'badge-seleccionado' : 'badge-en-oficina'}">
+                    ${isSelected ? '✓ Seleccionado' : 'Sin seleccionar'}
+                </span>
+            </div>
         </div>
         <div class="adv-details">
             <div class="detail-row">
@@ -1709,8 +1751,10 @@ function toggleSeleccion(id) {
     }
     const a = db.asesores.find(x => x.id === id);
     if (!a) return;
+    // Saber si ya estaba confirmado (para mantener el badge)
+    const isConfirmed = db.movimientos.some(m => m.id_asesor === id && m.fecha === todayStr());
     const old = document.getElementById(`sel-card-${id}`);
-    const newCard = buildSelectionCard(a);
+    const newCard = buildSelectionCard(a, isConfirmed);
     old.replaceWith(newCard);
     updateSelCounter();
 }
@@ -1740,32 +1784,70 @@ async function confirmarSalidas() {
         return;
     }
     const today = todayStr();
-    const { data: existing } = await sb.from('movimientos').select('id').eq('fecha', today).limit(1);
-    if (existing && existing.length > 0) {
-        showToast('La lista de hoy ya fue confirmada. Usa "Modificar Lista" primero.', 'warning');
+
+    // Obtener los que YA tienen movimiento hoy
+    const { data: existing } = await sb.from('movimientos').select('id_asesor').eq('fecha', today);
+    const yaConfirmadosIds = new Set((existing || []).map(m => m.id_asesor));
+
+    // Solo insertar los que NO están ya en la lista
+    const nuevos = [...selectedAdvisors].filter(id => !yaConfirmadosIds.has(id));
+    // Eliminar los que fueron deseleccionados y estaban en la lista
+    const aEliminar = [...yaConfirmadosIds].filter(id => !selectedAdvisors.has(id));
+
+    if (nuevos.length === 0 && aEliminar.length === 0) {
+        showToast('No hay cambios que guardar.', 'warning');
         return;
     }
-    if (!confirm(`¿Confirmar que ${selectedAdvisors.size} asesor(es) llevarán equipo hoy?\n\nEsta lista será visible para Sistemas y Seguridad.`)) return;
 
-    const inserts = [...selectedAdvisors].map(id => ({
-        id_asesor: id, fecha: today, estado: 'Autorizado',
-        hora_salida: null, fecha_devolucion: null, hora_devolucion: null, notas: '', incidencia: null
-    }));
-    const { error } = await sb.from('movimientos').insert(inserts);
-    if (error) { showToast('Error al guardar: ' + error.message, 'error'); return; }
+    const mensajeCambios = [
+        nuevos.length > 0 ? `Agregar ${nuevos.length} asesor(es)` : '',
+        aEliminar.length > 0 ? `Quitar ${aEliminar.length} asesor(es)` : ''
+    ].filter(Boolean).join(' y ');
 
+    if (!confirm(`¿Confirmar cambios? ${mensajeCambios}\n\nLa lista actualizada será visible para Sistemas y Seguridad.`)) return;
+
+    // Eliminar los deseleccionados
+    if (aEliminar.length > 0) {
+        const { error: errDel } = await sb.from('movimientos').delete().eq('fecha', today).in('id_asesor', aEliminar);
+        if (errDel) { showToast('Error al quitar asesores: ' + errDel.message, 'error'); return; }
+    }
+
+    // Insertar solo los nuevos
+    if (nuevos.length > 0) {
+        const inserts = nuevos.map(id => ({
+            id_asesor: id, fecha: today, estado: 'Autorizado',
+            hora_salida: null, fecha_devolucion: null, hora_devolucion: null, notas: '', incidencia: null
+        }));
+        const { error: errIns } = await sb.from('movimientos').insert(inserts);
+        if (errIns) { showToast('Error al agregar: ' + errIns.message, 'error'); return; }
+    }
+
+    editMode = false;
     selectedAdvisors.clear();
-    showToast(`✅ Lista confirmada: ${inserts.length} equipo(s) autorizados para hoy.`, 'success');
+    showToast(`✅ Lista actualizada correctamente.`, 'success');
+    loadSeleccion();
+}
+
+function enterEditMode() {
+    editMode = true;
+    selectedAdvisors.clear(); // se re-cargan desde la BD en loadSeleccion
+    loadSeleccion();
+}
+
+function cancelEditMode() {
+    editMode = false;
+    selectedAdvisors.clear();
     loadSeleccion();
 }
 
 async function resetTodayList() {
-    if (!confirm('¿Deseas eliminar la lista de hoy y reconfigurarla? Se perderán los registros del día actual.')) return;
+    if (!confirm('¿Deseas BORRAR completamente la lista de hoy? Esta acción no se puede deshacer.')) return;
     const today = todayStr();
     const { error } = await sb.from('movimientos').delete().eq('fecha', today);
     if (error) { showToast('Error al eliminar lista: ' + error.message, 'error'); return; }
+    editMode = false;
     selectedAdvisors.clear();
-    showToast('Lista de hoy eliminada. Puedes volver a configurarla.', 'warning');
+    showToast('Lista de hoy eliminada.', 'warning');
     loadSeleccion();
 }
 
