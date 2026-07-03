@@ -3,188 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FYD — Control de Salida de Equipos</title>
-    <meta name="description" content="Sistema de control y seguimiento de equipos informáticos para teletrabajo. Gestión de salidas, devoluciones e incidencias.">
+    <title>FYD Control — Equipos Informáticos</title>
+    <!-- Outfit & JetBrains Mono Fonts from Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <!-- SweetAlert2 para Alertas Estilo Pop-up de alta fidelidad -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Lucide Icons CDN -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome 6 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#040712',
+                            sidebar: '#020308',
+                            card: 'rgba(8, 12, 24, 0.45)',
+                            'card-hover': 'rgba(12, 20, 38, 0.65)',
+                            primary: '#0ea5e9',      /* cyan-500 */
+                            accent: '#ec4899',       /* pink-500 */
+                            purple: '#6366f1',       /* indigo-500 */
+                            success: '#10b981',      /* emerald-500 */
+                            warning: '#f59e0b',      /* amber-500 */
+                            danger: '#ef4444',       /* red-500 */
+                        }
+                    },
+                    boxShadow: {
+                        'neon-cyan': '0 0 15px rgba(14, 165, 233, 0.25)',
+                        'neon-pink': '0 0 15px rgba(236, 72, 153, 0.2)',
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
+<body class="bg-[#040712] text-gray-200 font-sans overflow-hidden h-screen w-screen relative">
+
+<!-- Scanlines Overlay (HUD Effect) -->
+<div class="pointer-events-none fixed inset-0 z-[99999] scanlines opacity-[0.03]"></div>
 
 <!-- ===== PRINT AREA ===== -->
 <div id="print-area"></div>
 
 <!-- ===== LOGIN SCREEN ===== -->
-<div id="login-screen" class="login-screen">
-    <div class="login-box">
-        <div class="login-logo">💻</div>
-        <h2>FYD Control de Equipos</h2>
-        <p>Selecciona tu rol para ingresar al sistema</p>
+<div id="login-screen" class="login-screen fixed inset-0 z-50 flex items-center justify-center bg-radial-gradient p-4">
+    <div class="login-box relative bg-cyber-card border border-cyan-500/10 rounded-xl p-8 w-full max-w-[420px] backdrop-blur-xl shadow-2xl shadow-black/80 text-center overflow-hidden">
+        <!-- Laser line top -->
+        <div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cyan-500 to-indigo-500"></div>
+        
+        <div class="login-logo text-cyan-400 drop-shadow-[0_0_12px_rgba(14,165,233,0.5)] mb-4 animate-bounce">
+            <i class="fa-solid fa-shield-halved text-5xl"></i>
+        </div>
+        <h2 class="text-xl font-extrabold tracking-wider uppercase bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-1">FYD Control</h2>
+        <p class="text-xs text-gray-400 mb-6 uppercase tracking-widest">Equipos Informáticos · Consola de Acceso</p>
 
-        <div class="role-selector">
-            <div class="role-option" id="role-opt-lider" onclick="selectRole('lider')">
-                <span class="icon">👩‍💼</span>
+        <div class="role-selector flex flex-col gap-3 mb-6">
+            <div class="role-option flex items-center gap-4 p-3.5 bg-black/40 border border-white/5 rounded-lg cursor-pointer transition-all duration-200 text-left hover:bg-white/5 hover:translate-x-1" id="role-opt-lider" onclick="selectRole('lider')">
+                <div class="w-10 h-10 rounded-full bg-cyan-950/40 border border-cyan-500/20 flex items-center justify-center text-cyan-400 text-lg shadow-[0_0_8px_rgba(14,165,233,0.15)]"><i class="fa-solid fa-user-tie"></i></div>
                 <div>
-                    <div class="ro-name">Líder del Área</div>
-                    <div class="ro-desc">Gestiona asesores y autoriza salidas diarias</div>
+                    <div class="ro-name text-sm font-bold text-gray-100">Líder del Área</div>
+                    <div class="ro-desc text-[11px] text-gray-400">Gestiona asesores y autoriza salidas diarias</div>
                 </div>
             </div>
-            <div class="role-option" id="role-opt-sistemas" onclick="selectRole('sistemas')">
-                <span class="icon">🖥️</span>
+            <div class="role-option flex items-center gap-4 p-3.5 bg-black/40 border border-white/5 rounded-lg cursor-pointer transition-all duration-200 text-left hover:bg-white/5 hover:translate-x-1" id="role-opt-sistemas" onclick="selectRole('sistemas')">
+                <div class="w-10 h-10 rounded-full bg-indigo-950/40 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-lg shadow-[0_0_8px_rgba(99,102,241,0.15)]"><i class="fa-solid fa-laptop-code"></i></div>
                 <div>
-                    <div class="ro-name">Sistemas (TI)</div>
-                    <div class="ro-desc">Monitorea y audita los movimientos de equipos</div>
+                    <div class="ro-name text-sm font-bold text-gray-100">Sistemas (TI)</div>
+                    <div class="ro-desc text-[11px] text-gray-400">Monitorea y audita los movimientos de equipos</div>
                 </div>
             </div>
-            <div class="role-option" id="role-opt-seguridad" onclick="selectRole('seguridad')">
-                <span class="icon">🛡️</span>
+            <div class="role-option flex items-center gap-4 p-3.5 bg-black/40 border border-white/5 rounded-lg cursor-pointer transition-all duration-200 text-left hover:bg-white/5 hover:translate-x-1" id="role-opt-seguridad" onclick="selectRole('seguridad')">
+                <div class="w-10 h-10 rounded-full bg-emerald-950/40 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-lg shadow-[0_0_8px_rgba(16,185,129,0.15)]"><i class="fa-solid fa-user-shield"></i></div>
                 <div>
-                    <div class="ro-name">Seguridad</div>
-                    <div class="ro-desc">Verifica la lista de salidas e imprime registros</div>
+                    <div class="ro-name text-sm font-bold text-gray-100">Seguridad</div>
+                    <div class="ro-desc text-[11px] text-gray-400">Verifica la lista de salidas e imprime registros</div>
                 </div>
             </div>
         </div>
 
-        <div id="pin-section" class="hidden">
-            <div class="form-group">
-                <label>Ingresa la clave de acceso</label>
-                <input type="password" class="pin-input" id="pin-input" placeholder="••••" maxlength="10" onkeyup="if(event.key==='Enter') doLogin()">
+        <div id="pin-section" class="hidden mb-4">
+            <div class="form-group flex flex-col gap-2 text-left">
+                <label class="text-[11px] font-bold text-cyan-400 uppercase tracking-wider">Ingresa la clave de acceso</label>
+                <input type="password" class="pin-input w-full bg-black/50 border border-cyan-500/20 rounded-lg p-3 text-center text-xl text-cyan-400 tracking-[8px] font-mono outline-none focus:border-cyan-400 focus:shadow-[0_0_10px_rgba(14,165,233,0.3)] transition-all" id="pin-input" placeholder="••••" maxlength="10" onkeyup="if(event.key==='Enter') doLogin()">
             </div>
         </div>
 
-        <button class="btn btn-primary btn-full" id="btn-login" onclick="doLogin()" style="margin-top: 4px;">
-            Ingresar al Sistema →
+        <button class="btn btn-primary w-full bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-cyan-500/20 transition-all uppercase tracking-wider text-xs" id="btn-login" onclick="doLogin()">
+            Ingresar al Sistema <i class="fa-solid fa-arrow-right-to-bracket ml-2"></i>
         </button>
 
-        <div id="login-error" class="hidden" style="margin-top:14px; color:#f87171; font-size:0.85rem;">
-            ❌ Clave incorrecta. Inténtalo de nuevo.
+        <div id="login-error" class="hidden mt-4 text-red-400 text-xs font-semibold">
+            <i class="fa-solid fa-circle-exclamation mr-1"></i> Clave incorrecta. Inténtalo de nuevo.
         </div>
     </div>
 </div>
 
 <!-- ===== MAIN APP ===== -->
-<div class="app-shell hidden" id="app-shell">
+<div class="app-shell hidden w-screen h-screen grid grid-cols-1 lg:grid-cols-[290px_1fr] overflow-hidden" id="app-shell">
 
     <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="brand">
-            <div class="brand-logo">💻</div>
+    <aside class="sidebar bg-cyber-sidebar border-r border-white/5 flex flex-col p-6 h-screen overflow-y-auto">
+        <div class="brand flex items-center gap-4 mb-8">
+            <div class="brand-logo text-cyan-400 drop-shadow-[0_0_8px_rgba(14,165,233,0.3)] text-3xl">
+                <i class="fa-solid fa-network-wired"></i>
+            </div>
             <div class="brand-text">
-                <h1>FYD CONTROL</h1>
-                <span>Equipos Informáticos</span>
+                <h1 class="text-md font-extrabold tracking-wider bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">FYD CONTROL</h1>
+                <span class="text-[9px] font-bold text-cyan-400 uppercase tracking-widest">Terminal de Control</span>
             </div>
         </div>
 
-        <div class="role-card" id="sidebar-role-card">
-            <div class="role-avatar avatar-leader" id="sidebar-avatar">👩‍💼</div>
+        <div class="role-card flex items-center gap-3.5 p-3.5 bg-white/5 border border-white/5 rounded-lg mb-6 shadow-inner" id="sidebar-role-card">
+            <div class="role-avatar w-10 h-10 rounded-full bg-cyan-950/40 border border-cyan-500/20 flex items-center justify-center text-lg shadow-[0_0_8px_rgba(14,165,233,0.15)]" id="sidebar-avatar">👩‍💼</div>
             <div class="role-info">
-                <div class="name" id="sidebar-role-name">—</div>
-                <div class="role-label" id="sidebar-role-label">Rol activo</div>
+                <div class="name text-xs font-bold text-gray-100" id="sidebar-role-name">—</div>
+                <div class="role-label text-[10px] text-gray-400 uppercase tracking-wider" id="sidebar-role-label">Rol activo</div>
             </div>
         </div>
 
-        <div class="nav-section-label">Navegación</div>
+        <div class="nav-section-label text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Panel de Misión</div>
 
         <!-- LÍDER navigation -->
-        <div id="nav-lider" class="hidden">
-            <button id="btn-view-asesores" class="nav-btn" onclick="switchView('asesores')">
-                <i data-lucide="users" class="nav-icon"></i> Mis Asesores
+        <div id="nav-lider" class="hidden flex flex-col gap-1.5">
+            <button id="btn-view-asesores" class="nav-btn w-full flex items-center gap-3.5 py-3 px-4 rounded-lg text-sm font-semibold transition-all hover:bg-white/5" onclick="switchView('asesores')">
+                <i class="fa-solid fa-users-gear text-lg"></i> Mis Asesores
             </button>
-            <button id="btn-view-seleccionar" class="nav-btn" onclick="switchView('seleccionar')">
-                <i data-lucide="check-square" class="nav-icon"></i> Autorizar Salidas de Hoy
+            <button id="btn-view-seleccionar" class="nav-btn w-full flex items-center gap-3.5 py-3 px-4 rounded-lg text-sm font-semibold transition-all hover:bg-white/5" onclick="switchView('seleccionar')">
+                <i class="fa-solid fa-clipboard-check text-lg"></i> Autorizar Salidas
             </button>
-            <button id="btn-view-historial" class="nav-btn" onclick="switchView('historial')">
-                <i data-lucide="history" class="nav-icon"></i> Historial de Movimientos
+            <button id="btn-view-historial" class="nav-btn w-full flex items-center gap-3.5 py-3 px-4 rounded-lg text-sm font-semibold transition-all hover:bg-white/5" onclick="switchView('historial')">
+                <i class="fa-solid fa-clock-rotate-left text-lg"></i> Historial
             </button>
         </div>
 
         <!-- SISTEMAS navigation -->
-        <div id="nav-sistemas" class="hidden">
-            <button id="btn-view-monitor" class="nav-btn" onclick="switchView('monitor')">
-                <i data-lucide="monitor" class="nav-icon"></i> Monitor de Salidas
+        <div id="nav-sistemas" class="hidden flex flex-col gap-1.5">
+            <button id="btn-view-monitor" class="nav-btn w-full flex items-center gap-3.5 py-3 px-4 rounded-lg text-sm font-semibold transition-all hover:bg-white/5" onclick="switchView('monitor')">
+                <i class="fa-solid fa-desktop text-lg"></i> Monitor de Equipos
             </button>
-            <button id="btn-view-historial" class="nav-btn" onclick="switchView('historial')">
-                <i data-lucide="history" class="nav-icon"></i> Historial Completo
+            <button id="btn-view-historial" class="nav-btn w-full flex items-center gap-3.5 py-3 px-4 rounded-lg text-sm font-semibold transition-all hover:bg-white/5" onclick="switchView('historial')">
+                <i class="fa-solid fa-clock-rotate-left text-lg"></i> Historial Completo
             </button>
-            <button id="btn-view-incidencias" class="nav-btn" onclick="switchView('incidencias')">
-                <i data-lucide="alert-triangle" class="nav-icon"></i> Incidencias
+            <button id="btn-view-incidencias" class="nav-btn w-full flex items-center gap-3.5 py-3 px-4 rounded-lg text-sm font-semibold transition-all hover:bg-white/5" onclick="switchView('incidencias')">
+                <i class="fa-solid fa-triangle-exclamation text-lg"></i> Incidencias
             </button>
         </div>
 
         <!-- SEGURIDAD navigation -->
-        <div id="nav-seguridad" class="hidden">
-            <button id="btn-view-lista-seg" class="nav-btn" onclick="switchView('lista-seg')">
-                <i data-lucide="shield" class="nav-icon"></i> Lista de Salidas de Hoy
+        <div id="nav-seguridad" class="hidden flex flex-col gap-1.5">
+            <button id="btn-view-lista-seg" class="nav-btn w-full flex items-center gap-3.5 py-3 px-4 rounded-lg text-sm font-semibold transition-all hover:bg-white/5" onclick="switchView('lista-seg')">
+                <i class="fa-solid fa-shield-halved text-lg"></i> Control de Hoy
             </button>
-            <button id="btn-view-imprimir" class="nav-btn" onclick="switchView('imprimir')">
-                <i data-lucide="printer" class="nav-icon"></i> Imprimir Registro
+            <button id="btn-view-imprimir" class="nav-btn w-full flex items-center gap-3.5 py-3 px-4 rounded-lg text-sm font-semibold transition-all hover:bg-white/5" onclick="switchView('imprimir')">
+                <i class="fa-solid fa-print text-lg"></i> Imprimir Registro
             </button>
         </div>
 
-        <div class="sidebar-spacer"></div>
+        <div class="sidebar-spacer flex-grow"></div>
 
-        <button class="nav-btn" onclick="logout()" style="color: #f87171;">
-            <i data-lucide="log-out" class="nav-icon" style="color: #f87171;"></i> Cerrar Sesión
+        <button class="nav-btn w-full flex items-center gap-3.5 py-3 px-4 rounded-lg text-sm font-semibold transition-all hover:bg-red-500/10 text-red-400/90 hover:text-red-400 mt-6" onclick="logout()">
+            <i class="fa-solid fa-power-off text-lg"></i> Cerrar Sesión
         </button>
 
-        <div class="sidebar-footer">
-            FYD Control v2.0 · ☁️ Supabase<br>
-            <span id="sidebar-date"></span>
+        <div class="sidebar-footer text-[10px] text-gray-500 text-center pt-4 mt-4 border-t border-white/5 font-mono">
+            FYD CONTROL v3.0 · ☁️ Supabase<br>
+            <span id="sidebar-date" class="text-cyan-500/80"></span>
         </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="main" id="main-content">
-        <header class="page-header">
+    <main class="main flex flex-col gap-6 p-8 overflow-y-auto h-screen" id="main-content">
+        <header class="page-header flex justify-between items-center border-b border-white/5 pb-5 relative shrink-0">
             <div>
-                <h2 id="view-title">—</h2>
-                <p id="view-subtitle">—</p>
+                <h2 id="view-title" class="text-xl font-extrabold uppercase tracking-wide text-gray-100">—</h2>
+                <p id="view-subtitle" class="text-xs text-gray-400 mt-1">—</p>
             </div>
-            <div class="header-actions" id="header-actions"></div>
+            <div class="header-actions flex gap-3" id="header-actions"></div>
         </header>
 
         <!-- ======== VISTA: ASESORES (LÍDER) ======== -->
-        <section id="view-asesores" class="asesores-layout hidden">
+        <section id="view-asesores" class="section-gap hidden flex flex-col gap-6">
 
             <!-- Panel: Registrar Asesor (colapsable) -->
-            <div class="form-panel" id="form-panel-wrap">
-                <div class="form-panel-header" onclick="toggleFormPanel()">
-                    <div class="form-panel-header-left">
-                        <div class="form-panel-icon">➕</div>
+            <div class="form-panel bg-cyber-card border border-white/5 rounded-xl overflow-hidden shadow-2xl" id="form-panel-wrap">
+                <div class="form-panel-header flex justify-between items-center p-5 cursor-pointer select-none hover:bg-white/5 transition-all" onclick="toggleFormPanel()">
+                    <div class="form-panel-header-left flex items-center gap-4">
+                        <div class="form-panel-icon text-cyan-400 text-xl"><i class="fa-solid fa-user-plus"></i></div>
                         <div>
-                            <div class="form-panel-title" id="advisor-form-title">Registrar Nuevo Asesor</div>
-                            <div class="form-panel-subtitle">Haz clic para desplegar el formulario de registro</div>
+                            <div class="form-panel-title text-sm font-bold uppercase tracking-wider text-gray-100" id="advisor-form-title">Registrar Nuevo Asesor</div>
+                            <div class="form-panel-subtitle text-xs text-gray-400 mt-0.5">Haz clic para desplegar el formulario de registro</div>
                         </div>
                     </div>
-                    <div class="form-panel-toggle">✕</div>
+                    <div class="form-panel-toggle text-cyan-400 font-bold transition-all"><i class="fa-solid fa-plus"></i></div>
                 </div>
-                <div class="form-panel-body">
-                    <form id="form-advisor" onsubmit="addAdvisor(event)">
-                        <div class="form-inline-grid">
-                            <div class="form-group">
-                                <label>Cédula de Identidad</label>
-                                <input type="text" id="adv-cedula" placeholder="Ej. 1723776475" required pattern="\d{8,12}" title="8 a 12 dígitos numéricos">
+                <div class="form-panel-body transition-all duration-300">
+                    <form id="form-advisor" onsubmit="addAdvisor(event)" class="px-5 pb-5 pt-1">
+                        <div class="form-inline-grid grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-group flex flex-col gap-2">
+                                <label class="text-[11px] font-bold text-cyan-400 uppercase tracking-wider">Cédula de Identidad</label>
+                                <input type="text" id="adv-cedula" placeholder="Ej. 1723776475" required pattern="\d{8,12}" title="8 a 12 dígitos numéricos" class="bg-black/40 border border-white/5 rounded-lg p-2.5 text-sm text-gray-100 outline-none focus:border-cyan-400 focus:shadow-[0_0_8px_rgba(14,165,233,0.2)]">
                             </div>
-                            <div class="form-group">
-                                <label>N° de Serie del Equipo</label>
-                                <input type="text" id="adv-serial" placeholder="Ej. F60K3J · C9D32ADQ" required>
+                            <div class="form-group flex flex-col gap-2">
+                                <label class="text-[11px] font-bold text-cyan-400 uppercase tracking-wider">N° de Serie del Equipo</label>
+                                <input type="text" id="adv-serial" placeholder="Ej. F60K3J · C9D32ADQ" required class="bg-black/40 border border-white/5 rounded-lg p-2.5 text-sm text-gray-100 outline-none focus:border-cyan-400 focus:shadow-[0_0_8px_rgba(14,165,233,0.2)]">
                             </div>
-                            <div class="form-group">
-                                <label>Nombre Completo del Asesor</label>
-                                <input type="text" id="adv-nombre" placeholder="Ej. Sandra Maybel Rosas García" required>
+                            <div class="form-group flex flex-col gap-2">
+                                <label class="text-[11px] font-bold text-cyan-400 uppercase tracking-wider">Nombre Completo del Asesor</label>
+                                <input type="text" id="adv-nombre" placeholder="Ej. Sandra Maybel Rosas García" required class="bg-black/40 border border-white/5 rounded-lg p-2.5 text-sm text-gray-100 outline-none focus:border-cyan-400 focus:shadow-[0_0_8px_rgba(14,165,233,0.2)]">
                             </div>
-                            <div class="form-group">
-                                <label>Modelo / Descripción del Equipo (opcional)</label>
-                                <input type="text" id="adv-modelo" placeholder="Ej. Lenovo ThinkPad E15">
+                            <div class="form-group flex flex-col gap-2">
+                                <label class="text-[11px] font-bold text-cyan-400 uppercase tracking-wider">Modelo / Descripción (opcional)</label>
+                                <input type="text" id="adv-modelo" placeholder="Ej. Lenovo ThinkPad E15" class="bg-black/40 border border-white/5 rounded-lg p-2.5 text-sm text-gray-100 outline-none focus:border-cyan-400 focus:shadow-[0_0_8px_rgba(14,165,233,0.2)]">
                             </div>
-                            <div class="span-2" style="display:flex; justify-content:flex-end; gap:10px; margin-top:4px;">
-                                <button type="button" class="btn btn-ghost" id="advisor-form-reset-btn" onclick="resetAdvisorForm()">Limpiar</button>
-                                <button type="submit" class="btn btn-primary" style="min-width:180px;" id="advisor-form-submit-btn">➕ Registrar Asesor</button>
+                            <div class="col-span-1 md:col-span-2 flex justify-end gap-3 mt-2">
+                                <button type="button" class="btn btn-secondary bg-white/5 text-gray-300 border border-white/5 hover:bg-white/10 text-xs py-2.5 px-4" id="advisor-form-reset-btn" onclick="resetAdvisorForm()">Limpiar</button>
+                                <button type="submit" class="btn btn-primary bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white border-none font-bold py-2.5 px-6 rounded-lg text-xs" id="advisor-form-submit-btn">➕ Registrar Asesor</button>
                             </div>
                         </div>
                     </form>
@@ -192,34 +230,34 @@
             </div>
 
             <!-- Tabla: Personal Registrado -->
-            <div class="table-card">
-                <div class="table-card-header">
+            <div class="table-card bg-cyber-card border border-white/5 rounded-xl p-5 shadow-2xl">
+                <div class="table-card-header flex justify-between items-center gap-4 flex-wrap mb-4">
                     <div class="table-card-header-left">
-                        <h3>Personal Registrado</h3>
-                        <p id="asesor-count-label">Cargando…</p>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wider text-gray-100">Personal Registrado</h3>
+                        <p id="asesor-count-label" class="text-xs text-gray-400">Cargando asesores…</p>
                     </div>
-                    <div class="table-card-header-right">
-                        <span class="asesor-count-pill" id="asesor-count-pill">0 asesores</span>
-                        <div class="search-wrap" style="position:relative;">
-                            <span class="search-icon" style="position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--text-3); pointer-events:none;">🔍</span>
-                            <input type="text" class="search-input-clean" id="search-asesores" placeholder="Buscar por nombre, cédula o serial…" oninput="filterAsesores()">
+                    <div class="table-card-header-right flex items-center gap-3.5 flex-wrap">
+                        <span class="asesor-count-pill bg-cyan-950/40 border border-cyan-500/20 text-cyan-400 text-xs font-mono font-bold py-1.5 px-3 rounded-full" id="asesor-count-pill">0 asesores</span>
+                        <div class="search-wrap relative min-w-[260px]">
+                            <span class="search-icon absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"><i class="fa-solid fa-magnifying-glass text-sm"></i></span>
+                            <input type="text" class="search-input-clean w-full bg-black/40 border border-white/5 rounded-lg py-2 pl-9 pr-4 text-xs text-gray-100 outline-none focus:border-cyan-400 focus:shadow-[0_0_8px_rgba(14,165,233,0.2)]" id="search-asesores" placeholder="Buscar por nombre, cédula o serial…" oninput="filterAsesores()">
                         </div>
                     </div>
                 </div>
-                <div class="table-inner">
-                    <div class="table-wrap" style="border:none; border-radius:0; background:transparent;">
-                        <table class="table">
+                <div class="table-inner border border-white/5 rounded-lg overflow-hidden bg-black/15">
+                    <div class="table-wrap overflow-x-auto w-full">
+                        <table class="table w-full border-collapse text-left text-xs">
                             <thead>
-                                <tr>
-                                    <th>Cédula</th>
-                                    <th>Nombre Completo</th>
-                                    <th>N° de Serie</th>
-                                    <th>Modelo</th>
-                                    <th>Estado</th>
-                                    <th style="text-align:center;">Acciones</th>
+                                <tr class="bg-white/5">
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Cédula</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Nombre Completo</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">N° de Serie</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Modelo</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Estado</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5 text-center">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody id="asesores-tbody"></tbody>
+                            <tbody id="asesores-tbody" class="divide-y divide-white/5"></tbody>
                         </table>
                     </div>
                 </div>
@@ -228,107 +266,111 @@
         </section>
 
         <!-- ======== VISTA: SELECCIONAR SALIDAS DE HOY (LÍDER) ======== -->
-        <section id="view-seleccionar" class="section-gap hidden">
-            <div class="card">
-                <div class="card-head">
+        <section id="view-seleccionar" class="section-gap hidden flex flex-col gap-6">
+            <div class="card bg-cyber-card border border-white/5 rounded-xl p-5 shadow-2xl">
+                <div class="card-head flex justify-between items-center gap-4 flex-wrap mb-5">
                     <div>
-                        <h3>¿Quiénes llevan computadora hoy?</h3>
-                        <p id="seleccionar-date-label">Selecciona solo los asesores que confirmaron llevar equipo</p>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wider text-gray-100">¿Quiénes llevan computadora hoy?</h3>
+                        <p id="seleccionar-date-label" class="text-xs text-gray-400 mt-1">Selecciona solo los asesores que confirmaron llevar equipo</p>
                     </div>
-                    <div class="flex gap-10" style="align-items:center;">
-                        <span class="selection-pill" id="sel-counter">0 seleccionados</span>
-                        <button class="btn btn-success" onclick="confirmarSalidas()">
-                            ✅ Confirmar Lista de Hoy
+                    <div class="flex gap-3 items-center">
+                        <span class="selection-pill bg-cyan-950/40 border border-cyan-500/20 text-cyan-400 text-xs font-mono font-bold py-2 px-4 rounded-full" id="sel-counter">0 seleccionados</span>
+                        <button class="btn btn-success bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold py-2 px-5 rounded-lg text-xs" onclick="confirmarSalidas()">
+                            <i class="fa-solid fa-circle-check mr-2"></i> Confirmar Lista
                         </button>
                     </div>
                 </div>
-                <div class="control-row" style="margin-bottom:16px;">
-                    <div class="search-wrap grow">
-                        <span class="search-icon">🔍</span>
-                        <input type="text" id="search-sel" placeholder="Buscar asesor…" oninput="filterSeleccion()" style="padding-left:36px; border-radius:8px;">
+                <div class="control-row flex justify-between items-center gap-4 flex-wrap mb-4">
+                    <div class="search-wrap grow relative min-w-[260px]">
+                        <span class="search-icon absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"><i class="fa-solid fa-magnifying-glass text-sm"></i></span>
+                        <input type="text" id="search-sel" placeholder="Buscar asesor…" oninput="filterSeleccion()" class="w-full bg-black/40 border border-white/5 rounded-lg py-2 pl-9 pr-4 text-xs text-gray-100 outline-none focus:border-cyan-400 focus:shadow-[0_0_8px_rgba(14,165,233,0.2)]">
                     </div>
-                    <button class="btn btn-ghost btn-sm" onclick="selectAll()">Seleccionar todos</button>
-                    <button class="btn btn-ghost btn-sm" onclick="clearAll()">Limpiar selección</button>
+                    <div class="flex gap-2">
+                        <button class="btn btn-ghost hover:bg-white/5 text-xs py-1.5 px-3" onclick="selectAll()"><i class="fa-solid fa-check-double mr-1.5"></i> Todos</button>
+                        <button class="btn btn-ghost hover:bg-white/5 text-xs py-1.5 px-3" onclick="clearAll()"><i class="fa-solid fa-trash-can mr-1.5"></i> Limpiar</button>
+                    </div>
                 </div>
-                <div id="seleccion-grid" class="advisor-grid"></div>
+                <div id="seleccion-grid" class="advisor-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
             </div>
         </section>
 
         <!-- ======== VISTA: HISTORIAL (LÍDER / SISTEMAS) ======== -->
-        <section id="view-historial" class="section-gap hidden">
-            <div class="card">
-                <div class="card-head">
+        <section id="view-historial" class="section-gap hidden flex flex-col gap-6">
+            <div class="card bg-cyber-card border border-white/5 rounded-xl p-5 shadow-2xl">
+                <div class="card-head flex justify-between items-center gap-4 flex-wrap mb-4">
                     <div>
-                        <h3>Historial de Movimientos</h3>
-                        <p>Registro completo de salidas, devoluciones e incidencias</p>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wider text-gray-100">Historial de Movimientos</h3>
+                        <p class="text-xs text-gray-400 mt-1">Registro completo de salidas, devoluciones e incidencias</p>
                     </div>
-                    <div class="flex gap-10" style="align-items:center;">
-                        <div class="form-group" style="margin:0;">
-                            <input type="date" id="historial-fecha" onchange="loadHistorial()" style="border-radius:8px; padding:8px 12px;">
+                    <div class="flex gap-3 items-center">
+                        <div class="form-group flex flex-col gap-1" style="margin:0;">
+                            <input type="date" id="historial-fecha" onchange="loadHistorial()" class="bg-black/40 border border-white/5 rounded-lg py-1.5 px-3 text-xs text-gray-100 outline-none focus:border-cyan-400">
                         </div>
-                        <button class="btn btn-ghost btn-sm" onclick="clearHistorialFecha()">Ver Todo</button>
+                        <button class="btn btn-ghost hover:bg-white/5 text-xs py-2 px-3" onclick="clearHistorialFecha()"><i class="fa-solid fa-list mr-1"></i> Ver Todo</button>
                     </div>
                 </div>
-                <div class="table-wrap">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Asesor</th>
-                                <th>Cédula</th>
-                                <th>N° Serie</th>
-                                <th>Hora Salida</th>
-                                <th>Fecha Retorno</th>
-                                <th>Hora Retorno</th>
-                                <th>Estado</th>
-                                <th>Notas</th>
-                            </tr>
-                        </thead>
-                        <tbody id="historial-tbody"></tbody>
-                    </table>
+                <div class="table-inner border border-white/5 rounded-lg overflow-hidden bg-black/15">
+                    <div class="table-wrap overflow-x-auto w-full">
+                        <table class="table w-full border-collapse text-left text-xs">
+                            <thead>
+                                <tr class="bg-white/5">
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Fecha</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Asesor</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Cédula</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">N° Serie</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Hora Salida</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Fecha Retorno</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Hora Retorno</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Estado</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Notas</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historial-tbody" class="divide-y divide-white/5"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </section>
 
         <!-- ======== VISTA: MONITOR (SISTEMAS) ======== -->
-        <section id="view-monitor" class="section-gap hidden">
-            <div class="stats-row">
-                <div class="stat-box stat-blue">
-                    <span class="stat-num" id="mon-total">0</span>
-                    <span class="stat-lbl">Autorizados Hoy</span>
+        <section id="view-monitor" class="section-gap hidden flex flex-col gap-6">
+            <div class="stats-row grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="stat-box stat-blue bg-black/35 border-l-4 border-l-cyan-500 border border-white/5 rounded-lg p-4 text-center">
+                    <span class="stat-num text-xl font-bold font-mono text-cyan-400" id="mon-total">0</span>
+                    <span class="stat-lbl text-[10px] text-gray-400 uppercase tracking-wider block mt-1">Autorizados Hoy</span>
                 </div>
-                <div class="stat-box stat-amber">
-                    <span class="stat-num" id="mon-fuera">0</span>
-                    <span class="stat-lbl">Fuera (Teletrabajo)</span>
+                <div class="stat-box stat-amber bg-black/35 border-l-4 border-l-amber-500 border border-white/5 rounded-lg p-4 text-center">
+                    <span class="stat-num text-xl font-bold font-mono text-amber-400" id="mon-fuera">0</span>
+                    <span class="stat-lbl text-[10px] text-gray-400 uppercase tracking-wider block mt-1">Fuera (Teletrabajo)</span>
                 </div>
-                <div class="stat-box stat-green">
-                    <span class="stat-num" id="mon-devueltos">0</span>
-                    <span class="stat-lbl">Devueltos</span>
+                <div class="stat-box stat-green bg-black/35 border-l-4 border-l-emerald-500 border border-white/5 rounded-lg p-4 text-center">
+                    <span class="stat-num text-xl font-bold font-mono text-emerald-400" id="mon-devueltos">0</span>
+                    <span class="stat-lbl text-[10px] text-gray-400 uppercase tracking-wider block mt-1">Devueltos</span>
                 </div>
-                <div class="stat-box stat-red">
-                    <span class="stat-num" id="mon-incidencias">0</span>
-                    <span class="stat-lbl">Con Incidencia</span>
+                <div class="stat-box stat-red bg-black/35 border-l-4 border-l-red-500 border border-white/5 rounded-lg p-4 text-center">
+                    <span class="stat-num text-xl font-bold font-mono text-red-400" id="mon-incidencias">0</span>
+                    <span class="stat-lbl text-[10px] text-gray-400 uppercase tracking-wider block mt-1">Con Incidencia</span>
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-head">
+            <div class="card bg-cyber-card border border-white/5 rounded-xl p-5 shadow-2xl">
+                <div class="card-head flex justify-between items-center gap-4 flex-wrap mb-4">
                     <div>
-                        <h3>Estado de Equipos — Hoy</h3>
-                        <p id="monitor-date-label">Vista en tiempo real del estado de cada equipo</p>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wider text-gray-100">Estado de Equipos — Hoy</h3>
+                        <p id="monitor-date-label" class="text-xs text-gray-400 mt-1">Vista en tiempo real del estado de cada equipo</p>
                     </div>
-                    <div class="flex gap-10">
-                        <button class="btn btn-ghost btn-sm" onclick="loadMonitor()">🔄 Actualizar</button>
-                        <button class="btn btn-primary btn-sm" onclick="printSecurityList()">🖨️ Imprimir</button>
+                    <div class="flex gap-2.5">
+                        <button class="btn btn-ghost hover:bg-white/5 text-xs py-1.5 px-3" onclick="loadMonitor()"><i class="fa-solid fa-rotate mr-1.5"></i> Actualizar</button>
+                        <button class="btn btn-primary bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white border-none py-1.5 px-4 rounded-lg text-xs" onclick="printSecurityList()"><i class="fa-solid fa-print mr-1.5"></i> Imprimir</button>
                     </div>
                 </div>
-                <div class="control-row" style="margin-bottom: 16px;">
-                    <div class="search-wrap grow">
-                        <span class="search-icon">🔍</span>
-                        <input type="text" id="search-monitor" placeholder="Buscar por nombre o cédula…" oninput="filterMonitor()" style="padding-left:36px; border-radius:8px;">
+                <div class="control-row flex justify-between items-center gap-4 flex-wrap mb-4">
+                    <div class="search-wrap grow relative min-w-[260px]">
+                        <span class="search-icon absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"><i class="fa-solid fa-magnifying-glass text-sm"></i></span>
+                        <input type="text" id="search-monitor" placeholder="Buscar por nombre o cédula…" oninput="filterMonitor()" class="w-full bg-black/40 border border-white/5 rounded-lg py-2 pl-9 pr-4 text-xs text-gray-100 outline-none focus:border-cyan-400 focus:shadow-[0_0_8px_rgba(14,165,233,0.2)]">
                     </div>
-                    <div class="form-group" style="margin:0;">
-                        <select id="filter-estado" onchange="filterMonitor()" style="border-radius:8px; padding:8px 12px; min-width:150px;">
+                    <div class="form-group flex flex-col gap-1" style="margin:0;">
+                        <select id="filter-estado" onchange="filterMonitor()" class="bg-black/40 border border-white/5 rounded-lg py-2 px-3 text-xs text-gray-100 outline-none focus:border-cyan-400 min-w-[160px]">
                             <option value="">Todos los estados</option>
                             <option value="Autorizado">Autorizado (En Oficina)</option>
                             <option value="En Teletrabajo">En Teletrabajo</option>
@@ -337,88 +379,89 @@
                         </select>
                     </div>
                 </div>
-                <div id="monitor-grid" class="advisor-grid"></div>
+                <div id="monitor-grid" class="advisor-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
             </div>
         </section>
 
         <!-- ======== VISTA: INCIDENCIAS (SISTEMAS) ======== -->
-        <section id="view-incidencias" class="section-gap hidden">
-            <div class="card">
-                <div class="card-head">
+        <section id="view-incidencias" class="section-gap hidden flex flex-col gap-6">
+            <div class="card bg-cyber-card border border-white/5 rounded-xl p-5 shadow-2xl">
+                <div class="card-head flex justify-between items-center gap-4 flex-wrap mb-4">
                     <div>
-                        <h3>Registro de Incidencias</h3>
-                        <p>Equipos con situaciones especiales: robo, pérdida, daño o no devuelto</p>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wider text-gray-100">Registro de Incidencias</h3>
+                        <p class="text-xs text-gray-400 mt-1">Equipos con situaciones especiales: robo, pérdida, daño o no devuelto</p>
                     </div>
                 </div>
-                <div class="table-wrap">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Asesor</th>
-                                <th>Cédula</th>
-                                <th>N° Serie</th>
-                                <th>Tipo</th>
-                                <th>Descripción</th>
-                                <th>Reportado por</th>
-                            </tr>
-                        </thead>
-                        <tbody id="incidencias-tbody"></tbody>
-                    </table>
+                <div class="table-inner border border-white/5 rounded-lg overflow-hidden bg-black/15">
+                    <div class="table-wrap overflow-x-auto w-full">
+                        <table class="table w-full border-collapse text-left text-xs">
+                            <thead>
+                                <tr class="bg-white/5">
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Fecha</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Asesor</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Cédula</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">N° Serie</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Tipo</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Descripción</th>
+                                    <th class="py-3.5 px-4 font-bold uppercase tracking-wider text-cyan-400 border-b border-white/5">Reportado por</th>
+                                </tr>
+                            </thead>
+                            <tbody id="incidencias-tbody" class="divide-y divide-white/5"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </section>
 
         <!-- ======== VISTA: LISTA SEGURIDAD ======== -->
-        <section id="view-lista-seg" class="section-gap hidden">
-            <div class="stats-row">
-                <div class="stat-box stat-blue">
-                    <span class="stat-num" id="seg-total">0</span>
-                    <span class="stat-lbl">Autorizados Hoy</span>
+        <section id="view-lista-seg" class="section-gap hidden flex flex-col gap-6">
+            <div class="stats-row grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="stat-box stat-blue bg-black/35 border-l-4 border-l-cyan-500 border border-white/5 rounded-lg p-4 text-center">
+                    <span class="stat-num text-xl font-bold font-mono text-cyan-400" id="seg-total">0</span>
+                    <span class="stat-lbl text-[10px] text-gray-400 uppercase tracking-wider block mt-1">Autorizados Hoy</span>
                 </div>
-                <div class="stat-box stat-amber">
-                    <span class="stat-num" id="seg-fuera">0</span>
-                    <span class="stat-lbl">Fuera (Teletrabajo)</span>
+                <div class="stat-box stat-amber bg-black/35 border-l-4 border-l-amber-500 border border-white/5 rounded-lg p-4 text-center">
+                    <span class="stat-num text-xl font-bold font-mono text-amber-400" id="seg-fuera">0</span>
+                    <span class="stat-lbl text-[10px] text-gray-400 uppercase tracking-wider block mt-1">Fuera (Teletrabajo)</span>
                 </div>
-                <div class="stat-box stat-green">
-                    <span class="stat-num" id="seg-devueltos">0</span>
-                    <span class="stat-lbl">Devueltos</span>
+                <div class="stat-box stat-green bg-black/35 border-l-4 border-l-emerald-500 border border-white/5 rounded-lg p-4 text-center">
+                    <span class="stat-num text-xl font-bold font-mono text-emerald-400" id="seg-devueltos">0</span>
+                    <span class="stat-lbl text-[10px] text-gray-400 uppercase tracking-wider block mt-1">Devueltos</span>
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-head">
+            <div class="card bg-cyber-card border border-white/5 rounded-xl p-5 shadow-2xl">
+                <div class="card-head flex justify-between items-center gap-4 flex-wrap mb-4">
                     <div>
-                        <h3>Asesores Autorizados para Hoy</h3>
-                        <p id="seg-date-label">Lista aprobada por la líder del área</p>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wider text-gray-100">Asesores Autorizados para Hoy</h3>
+                        <p id="seg-date-label" class="text-xs text-gray-400 mt-1">Lista aprobada por la líder del área</p>
                     </div>
-                    <button class="btn btn-primary" onclick="printSecurityList()">
-                        🖨️ Imprimir Hoja de Control
+                    <button class="btn btn-primary bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white border-none py-2 px-5 rounded-lg text-xs" onclick="printSecurityList()">
+                        <i class="fa-solid fa-print mr-2"></i> Imprimir Hoja de Control
                     </button>
                 </div>
-                <div id="seg-grid" class="advisor-grid"></div>
-                <div id="seg-empty" class="empty-state hidden">
-                    <div class="empty-icon">📋</div>
-                    <h3>Sin lista para hoy</h3>
-                    <p>La líder aún no ha autorizado la lista de salidas de hoy. Consulta más tarde.</p>
+                <div id="seg-grid" class="advisor-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+                <div id="seg-empty" class="empty-state hidden flex flex-col items-center justify-center p-12 text-center text-gray-400">
+                    <div class="empty-icon text-4xl text-gray-600 mb-3"><i class="fa-solid fa-file-invoice"></i></div>
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-gray-300">Sin lista para hoy</h3>
+                    <p class="text-xs mt-1">La líder aún no ha autorizado la lista de salidas de hoy. Consulta más tarde.</p>
                 </div>
             </div>
         </section>
 
         <!-- ======== VISTA: IMPRIMIR (SEGURIDAD) ======== -->
-        <section id="view-imprimir" class="section-gap hidden">
-            <div class="card">
-                <div class="card-head">
+        <section id="view-imprimir" class="section-gap hidden flex flex-col gap-6">
+            <div class="card bg-cyber-card border border-white/5 rounded-xl p-5 shadow-2xl">
+                <div class="card-head flex justify-between items-center gap-4 flex-wrap mb-4">
                     <div>
-                        <h3>Vista Previa de Impresión</h3>
-                        <p>Hoja de control de retiro de equipos informáticos</p>
+                        <h3 class="text-sm font-extrabold uppercase tracking-wider text-gray-100">Vista Previa de Impresión</h3>
+                        <p class="text-xs text-gray-400 mt-1">Hoja de control de retiro de equipos informáticos</p>
                     </div>
-                    <button class="btn btn-primary" onclick="printSecurityList()">
-                        🖨️ Imprimir Ahora
+                    <button class="btn btn-primary bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white border-none py-2 px-5 rounded-lg text-xs" onclick="printSecurityList()">
+                        <i class="fa-solid fa-print mr-2"></i> Imprimir Ahora
                     </button>
                 </div>
-                <div id="print-preview-container"
-                     style="background:#fff; color:#000; border-radius:12px; padding:24px; font-family:Arial,sans-serif; min-height:300px;">
+                <div id="print-preview-container" class="bg-white text-black rounded-lg p-6 font-sans min-h-[300px] shadow-inner">
                     <div id="print-preview-content"></div>
                 </div>
             </div>
@@ -427,14 +470,16 @@
 </div>
 
 <!-- ===== INCIDENT MODAL ===== -->
-<div id="incident-modal" class="modal-overlay hidden">
-    <div class="modal">
-        <h3>⚠️ Registrar Incidencia</h3>
-        <p>Ingresa el tipo y descripción de la situación con el equipo.</p>
+<div id="incident-modal" class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4">
+    <div class="modal relative bg-cyber-sidebar border border-cyan-500/20 rounded-xl p-7 w-full max-w-[480px] shadow-2xl shadow-cyan-500/5 animate-scaleUp">
+        <h3 class="text-lg font-bold text-cyan-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation"></i> Registrar Incidencia
+        </h3>
+        <p class="text-xs text-gray-400 mb-5">Ingresa el tipo y descripción de la situación con el equipo.</p>
         <input type="hidden" id="incident-mov-id">
-        <div class="form-group">
-            <label>Tipo de Incidencia</label>
-            <select id="incident-tipo">
+        <div class="form-group flex flex-col gap-1.5 mb-4">
+            <label class="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">Tipo de Incidencia</label>
+            <select id="incident-tipo" class="bg-black/50 border border-white/10 rounded-lg p-2.5 text-xs text-gray-100 outline-none focus:border-cyan-400">
                 <option value="Robo">Robo</option>
                 <option value="Pérdida">Pérdida</option>
                 <option value="Daño">Daño físico</option>
@@ -442,39 +487,43 @@
                 <option value="Otro">Otro</option>
             </select>
         </div>
-        <div class="form-group">
-            <label>Descripción detallada</label>
-            <textarea id="incident-desc" rows="3" placeholder="Describe lo ocurrido con el equipo…" style="resize:vertical;"></textarea>
+        <div class="form-group flex flex-col gap-1.5 mb-5">
+            <label class="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">Descripción detallada</label>
+            <textarea id="incident-desc" rows="3" placeholder="Describe lo ocurrido con el equipo…" class="bg-black/50 border border-white/10 rounded-lg p-2.5 text-xs text-gray-100 outline-none focus:border-cyan-400 resize-y"></textarea>
         </div>
-        <div class="modal-actions">
-            <button class="btn btn-ghost" onclick="closeIncidentModal()">Cancelar</button>
-            <button class="btn btn-rose" onclick="confirmIncident()">Registrar Incidencia</button>
+        <div class="modal-actions flex justify-end gap-3">
+            <button class="btn btn-secondary bg-white/5 border-none hover:bg-white/10 text-xs py-2 px-4" onclick="closeIncidentModal()">Cancelar</button>
+            <button class="btn btn-danger bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 border-none text-white font-bold py-2 px-5 rounded-lg text-xs" onclick="confirmIncident()">Registrar</button>
         </div>
     </div>
 </div>
 
 <!-- ===== CONFIRM CHECKOUT MODAL ===== -->
-<div id="checkout-modal" class="modal-overlay hidden">
-    <div class="modal">
-        <h3>📤 Registrar Salida</h3>
-        <p id="checkout-modal-desc">Confirma la salida del equipo. Se registrará la hora actual.</p>
+<div id="checkout-modal" class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4">
+    <div class="modal relative bg-cyber-sidebar border border-cyan-500/20 rounded-xl p-7 w-full max-w-[440px] shadow-2xl shadow-cyan-500/5 animate-scaleUp">
+        <h3 class="text-lg font-bold text-cyan-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-arrow-up-from-bracket"></i> Registrar Salida
+        </h3>
+        <p id="checkout-modal-desc" class="text-xs text-gray-400 mb-6">Confirma la salida del equipo. Se registrará la hora actual.</p>
         <input type="hidden" id="checkout-mov-id">
-        <div class="modal-actions">
-            <button class="btn btn-ghost" onclick="closeCheckoutModal()">Cancelar</button>
-            <button class="btn btn-warning" onclick="confirmCheckout()">Confirmar Salida</button>
+        <div class="modal-actions flex justify-end gap-3">
+            <button class="btn btn-secondary bg-white/5 border-none hover:bg-white/10 text-xs py-2 px-4" onclick="closeCheckoutModal()">Cancelar</button>
+            <button class="btn btn-warning bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 border-none text-white font-bold py-2 px-5 rounded-lg text-xs" onclick="confirmCheckout()">Confirmar</button>
         </div>
     </div>
 </div>
 
 <!-- ===== CONFIRM CHECKIN MODAL ===== -->
-<div id="checkin-modal" class="modal-overlay hidden">
-    <div class="modal">
-        <h3>📥 Registrar Devolución</h3>
-        <p id="checkin-modal-desc">Confirma la devolución del equipo.</p>
+<div id="checkin-modal" class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4">
+    <div class="modal relative bg-cyber-sidebar border border-cyan-500/20 rounded-xl p-7 w-full max-w-[440px] shadow-2xl shadow-cyan-500/5 animate-scaleUp">
+        <h3 class="text-lg font-bold text-cyan-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-arrow-down-to-bracket"></i> Registrar Devolución
+        </h3>
+        <p id="checkin-modal-desc" class="text-xs text-gray-400 mb-6">Confirma la devolución del equipo.</p>
         <input type="hidden" id="checkin-mov-id">
-        <div class="modal-actions">
-            <button class="btn btn-ghost" onclick="closeCheckinModal()">Cancelar</button>
-            <button class="btn btn-success" onclick="confirmCheckin()">Confirmar Devolución</button>
+        <div class="modal-actions flex justify-end gap-3">
+            <button class="btn btn-secondary bg-white/5 border-none hover:bg-white/10 text-xs py-2 px-4" onclick="closeCheckinModal()">Cancelar</button>
+            <button class="btn btn-success bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 border-none text-white font-bold py-2 px-5 rounded-lg text-xs" onclick="confirmCheckin()">Confirmar</button>
         </div>
     </div>
 </div>
