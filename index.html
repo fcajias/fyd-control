@@ -8,792 +8,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        /* ==========================================================================
-           SISTEMA DE DISEÑO — MODO OSCURO PREMIUM GLASSMORPHISM
-           ========================================================================== */
-        :root {
-            --bg-app:       #060810;
-            --bg-sidebar:   #0b0e18;
-            --bg-card:      rgba(13, 18, 32, 0.75);
-            --bg-card-h:    rgba(20, 27, 48, 0.9);
-            --bg-input:     rgba(0, 0, 0, 0.3);
-            --border:       rgba(255, 255, 255, 0.07);
-            --border-focus: #3b82f6;
-
-            --text-1: #f1f5f9;
-            --text-2: #94a3b8;
-            --text-3: #4b5563;
-
-            --blue:   #3b82f6;
-            --blue-h: #2563eb;
-            --green:  #10b981;
-            --green-h:#059669;
-            --amber:  #f59e0b;
-            --orange: #f97316;
-            --red:    #ef4444;
-            --purple: #8b5cf6;
-            --rose:   #f43f5e;
-
-            --font: 'Outfit', system-ui, sans-serif;
-            --mono: 'JetBrains Mono', monospace;
-            --ease: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            --shadow: 0 20px 40px -10px rgba(0,0,0,0.7);
-            --r-xl: 20px;
-            --r-lg: 14px;
-            --r-md: 10px;
-            --r-sm: 6px;
-        }
-
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            background: var(--bg-app);
-            color: var(--text-1);
-            font-family: var(--font);
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* === BACKGROUND AMBIENT === */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background:
-                radial-gradient(ellipse 60% 40% at 20% 10%, rgba(59,130,246,0.06) 0%, transparent 60%),
-                radial-gradient(ellipse 50% 50% at 80% 90%, rgba(139,92,246,0.05) 0%, transparent 60%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* === LAYOUT === */
-        .app-shell {
-            display: grid;
-            grid-template-columns: 270px 1fr;
-            height: 100vh;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* === SIDEBAR === */
-        .sidebar {
-            background: var(--bg-sidebar);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 28px 18px;
-            gap: 8px;
-            overflow-y: auto;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 0 8px;
-            margin-bottom: 28px;
-        }
-
-        .brand-logo {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--blue), var(--purple));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4rem;
-            flex-shrink: 0;
-        }
-
-        .brand-text h1 {
-            font-size: 1.1rem;
-            font-weight: 800;
-            letter-spacing: 1px;
-            background: linear-gradient(90deg, var(--text-1), var(--text-2));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .brand-text span {
-            font-size: 0.7rem;
-            color: var(--text-3);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-        }
-
-        /* Role badge in sidebar */
-        .role-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
-            border-radius: var(--r-lg);
-            padding: 14px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .role-avatar {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            flex-shrink: 0;
-        }
-
-        .avatar-leader { background: linear-gradient(135deg, #f97316, #ef4444); }
-        .avatar-sistemas { background: linear-gradient(135deg, #8b5cf6, #3b82f6); }
-        .avatar-seguridad { background: linear-gradient(135deg, #10b981, #14b8a6); }
-
-        .role-info .name { font-size: 0.875rem; font-weight: 600; }
-        .role-info .role-label { font-size: 0.72rem; color: var(--text-2); }
-
-        /* Nav items */
-        .nav-section-label {
-            font-size: 0.68rem;
-            font-weight: 700;
-            color: var(--text-3);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            padding: 14px 10px 6px;
-        }
-
-        .nav-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-2);
-            font-family: var(--font);
-            text-align: left;
-            padding: 11px 14px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            border-radius: var(--r-md);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 11px;
-            width: 100%;
-            transition: var(--ease);
-        }
-
-        .nav-btn:hover {
-            background: rgba(255,255,255,0.05);
-            color: var(--text-1);
-        }
-
-        .nav-btn.active {
-            background: rgba(59,130,246,0.14);
-            color: #60a5fa;
-            border-left: 3px solid var(--blue);
-            padding-left: 11px;
-        }
-
-        .nav-btn .icon { font-size: 1.05rem; width: 20px; text-align: center; }
-
-        .sidebar-spacer { flex: 1; }
-
-        .sidebar-footer {
-            font-size: 0.72rem;
-            color: var(--text-3);
-            text-align: center;
-            padding-top: 16px;
-            border-top: 1px solid var(--border);
-        }
-
-        /* === MAIN CONTENT === */
-        .main {
-            overflow-y: auto;
-            padding: 36px 40px;
-            display: flex;
-            flex-direction: column;
-            gap: 28px;
-        }
-
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 22px;
-        }
-
-        .page-header h2 {
-            font-size: 1.65rem;
-            font-weight: 700;
-        }
-
-        .page-header p {
-            font-size: 0.875rem;
-            color: var(--text-2);
-            margin-top: 4px;
-        }
-
-        .header-actions { display: flex; gap: 10px; align-items: center; }
-
-        /* === GLASS CARDS === */
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--r-xl);
-            padding: 24px;
-            box-shadow: var(--shadow);
-            backdrop-filter: blur(20px);
-            transition: var(--ease);
-        }
-
-        .card:hover { background: var(--bg-card-h); }
-
-        .card-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
-        }
-
-        .card-head h3 { font-size: 1.05rem; font-weight: 600; }
-        .card-head p { font-size: 0.82rem; color: var(--text-2); margin-top: 3px; }
-
-        /* === BUTTONS === */
-        .btn {
-            padding: 10px 18px;
-            border: none;
-            border-radius: var(--r-md);
-            font-family: var(--font);
-            font-size: 0.875rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--ease);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            white-space: nowrap;
-        }
-
-        .btn:active { transform: scale(0.96); }
-        .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
-
-        .btn-primary   { background: var(--blue); color: #fff; }
-        .btn-primary:hover { background: var(--blue-h); }
-        .btn-success   { background: var(--green); color: #fff; }
-        .btn-success:hover { background: var(--green-h); }
-        .btn-warning   { background: var(--amber); color: #000; }
-        .btn-warning:hover { background: #d97706; }
-        .btn-danger    { background: var(--red); color: #fff; }
-        .btn-danger:hover  { background: #dc2626; }
-        .btn-rose      { background: var(--rose); color: #fff; }
-        .btn-rose:hover    { background: #e11d48; }
-        .btn-ghost     { background: rgba(255,255,255,0.05); color: var(--text-1); border: 1px solid var(--border); }
-        .btn-ghost:hover   { background: rgba(255,255,255,0.09); }
-        .btn-sm { padding: 6px 12px; font-size: 0.78rem; border-radius: var(--r-sm); }
-        .btn-full { width: 100%; }
-
-        /* === FORMS === */
-        .form-group { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; }
-        .form-group label { font-size: 0.82rem; font-weight: 500; color: var(--text-2); }
-
-        .form-group input, .form-group select, .form-group textarea {
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: var(--r-md);
-            padding: 11px 14px;
-            color: var(--text-1);
-            font-family: var(--font);
-            font-size: 0.9rem;
-            outline: none;
-            transition: var(--ease);
-            width: 100%;
-        }
-
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            border-color: var(--border-focus);
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
-        }
-
-        .form-group select option { background: #1a1d2e; }
-
-        /* === TABLES === */
-        .table-wrap {
-            overflow-x: auto;
-            border-radius: var(--r-lg);
-            border: 1px solid var(--border);
-            background: rgba(0,0,0,0.15);
-        }
-
-        .table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-        .table th, .table td { padding: 13px 18px; text-align: left; }
-        .table th { background: rgba(255,255,255,0.02); color: var(--text-2); font-weight: 600; border-bottom: 1px solid var(--border); }
-        .table td { border-bottom: 1px solid rgba(255,255,255,0.03); }
-        .table tr:last-child td { border-bottom: none; }
-        .table tr:hover td { background: rgba(255,255,255,0.01); }
-
-        /* === STATUS BADGES === */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 4px 10px;
-            border-radius: var(--r-sm);
-            font-size: 0.73rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .badge-en-oficina   { background: rgba(255,255,255,0.05); color: var(--text-2); border: 1px solid rgba(255,255,255,0.1); }
-        .badge-teletrabajo  { background: rgba(249,115,22,0.15); color: #fb923c; border: 1px solid var(--orange); }
-        .badge-devuelto     { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid var(--green); }
-        .badge-incidencia   { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid var(--red); }
-        .badge-seleccionado { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid var(--blue); }
-
-        /* === STATS === */
-        .stats-row { display: flex; gap: 16px; flex-wrap: wrap; }
-        .stat-box {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border);
-            border-radius: var(--r-lg);
-            padding: 14px 22px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-width: 100px;
-        }
-        .stat-num { font-size: 1.8rem; font-weight: 800; line-height: 1; }
-        .stat-lbl { font-size: 0.72rem; color: var(--text-2); margin-top: 4px; }
-        .stat-blue  .stat-num { color: #60a5fa; }
-        .stat-amber .stat-num { color: #fbbf24; }
-        .stat-green .stat-num { color: #34d399; }
-        .stat-red   .stat-num { color: #f87171; }
-
-        /* === ADVISOR GRID === */
-        .advisor-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 16px;
-        }
-
-        .advisor-card {
-            border-radius: var(--r-xl);
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            animation: fadeUp 0.3s ease-out;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .advisor-card.selected-card {
-            border-color: var(--blue) !important;
-            box-shadow: 0 0 0 2px rgba(59,130,246,0.3), var(--shadow);
-        }
-
-        .adv-card-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-
-        .adv-name { font-size: 0.95rem; font-weight: 600; margin-bottom: 3px; }
-        .adv-cedula { font-size: 0.8rem; color: var(--text-2); }
-
-        .adv-details {
-            background: rgba(0,0,0,0.2);
-            border-radius: var(--r-md);
-            padding: 10px 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 7px;
-            font-size: 0.82rem;
-        }
-
-        .detail-row { display: flex; justify-content: space-between; }
-        .detail-row span:first-child { color: var(--text-2); }
-        .detail-row span:last-child { font-family: var(--mono); font-size: 0.8rem; font-weight: 500; }
-
-        .adv-actions { display: flex; gap: 8px; }
-        .adv-actions .btn { flex: 1; font-size: 0.8rem; padding: 8px 10px; }
-
-        /* === CHECKBOX TOGGLE === */
-        .checkbox-toggle {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            font-size: 0.875rem;
-        }
-
-        .checkbox-toggle input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--blue);
-            cursor: pointer;
-        }
-
-        /* === SEARCH === */
-        .search-wrap { position: relative; }
-        .search-wrap input { padding-left: 40px; }
-        .search-icon {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-3);
-            font-size: 0.9rem;
-        }
-
-        /* === MODAL / OVERLAY === */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(6px);
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.2s ease;
-        }
-
-        .modal {
-            background: #0f1525;
-            border: 1px solid var(--border);
-            border-radius: var(--r-xl);
-            padding: 32px;
-            width: 90%;
-            max-width: 440px;
-            box-shadow: 0 30px 60px -10px rgba(0,0,0,0.9);
-            animation: scaleIn 0.2s ease;
-        }
-
-        .modal h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
-        .modal p { font-size: 0.875rem; color: var(--text-2); margin-bottom: 22px; }
-        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .modal-actions .btn { flex: 1; }
-
-        /* === LOGIN SCREEN === */
-        .login-screen {
-            position: fixed;
-            inset: 0;
-            background: var(--bg-app);
-            z-index: 200;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .login-screen::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(ellipse 50% 60% at 30% 20%, rgba(59,130,246,0.1) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 50% at 70% 80%, rgba(139,92,246,0.08) 0%, transparent 60%);
-        }
-
-        .login-box {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--r-xl);
-            padding: 44px 40px;
-            width: 90%;
-            max-width: 400px;
-            position: relative;
-            z-index: 1;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 40px 80px -20px rgba(0,0,0,0.9);
-            text-align: center;
-        }
-
-        .login-logo {
-            width: 64px;
-            height: 64px;
-            border-radius: 18px;
-            background: linear-gradient(135deg, var(--blue), var(--purple));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            margin: 0 auto 20px;
-        }
-
-        .login-box h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
-        .login-box p { font-size: 0.875rem; color: var(--text-2); margin-bottom: 28px; }
-
-        .role-selector { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
-
-        .role-option {
-            background: rgba(255,255,255,0.03);
-            border: 1.5px solid var(--border);
-            border-radius: var(--r-lg);
-            padding: 14px 18px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            cursor: pointer;
-            transition: var(--ease);
-            text-align: left;
-        }
-
-        .role-option:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); }
-        .role-option.selected { border-color: var(--blue); background: rgba(59,130,246,0.12); }
-
-        .role-option .icon { font-size: 1.6rem; }
-        .role-option .ro-name { font-size: 0.95rem; font-weight: 600; }
-        .role-option .ro-desc { font-size: 0.77rem; color: var(--text-2); }
-
-        .pin-input {
-            font-size: 1.5rem;
-            letter-spacing: 0.5rem;
-            text-align: center;
-            font-family: var(--mono);
-        }
-
-        /* === TOAST === */
-        .toast {
-            position: fixed;
-            bottom: 28px;
-            right: 28px;
-            background: #14182a;
-            border-radius: var(--r-lg);
-            padding: 14px 22px;
-            color: white;
-            font-weight: 500;
-            font-size: 0.9rem;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-            z-index: 500;
-            border-left: 4px solid var(--blue);
-            animation: slideInRight 0.3s ease;
-            max-width: 360px;
-        }
-
-        .toast.success { border-left-color: var(--green); }
-        .toast.error   { border-left-color: var(--red); }
-        .toast.warning { border-left-color: var(--amber); }
-
-        /* === PRINT TEMPLATE === */
-        @media print {
-            body > *:not(#print-area) { display: none !important; }
-            #print-area { display: block !important; }
-            .no-print { display: none !important; }
-        }
-
-        #print-area {
-            display: none;
-        }
-
-        .print-page {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            max-width: 900px;
-            margin: 0 auto;
-            color: #000;
-        }
-
-        .print-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 16px; }
-        .print-header h1 { font-size: 18px; font-weight: bold; }
-        .print-header p { font-size: 12px; color: #333; margin-top: 4px; }
-
-        .print-meta { display: flex; justify-content: space-between; margin-bottom: 14px; font-size: 12px; }
-
-        .print-clauses { background: #f9f9f9; border: 1px solid #ccc; border-radius: 6px; padding: 12px; margin-bottom: 16px; font-size: 11px; }
-        .print-clauses h3 { font-size: 12px; font-weight: bold; margin-bottom: 8px; }
-        .print-clauses ol { padding-left: 18px; }
-        .print-clauses ol li { margin-bottom: 4px; }
-
-        .print-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        .print-table th { background: #1a1a2e; color: white; padding: 8px 10px; text-align: left; font-size: 11px; }
-        .print-table td { padding: 8px 10px; border-bottom: 1px solid #e0e0e0; vertical-align: top; }
-        .print-table tr:nth-child(even) td { background: #f5f5f5; }
-        .print-table .sign-cell { height: 40px; min-width: 90px; }
-
-        .print-footer { margin-top: 20px; font-size: 10px; color: #555; text-align: center; border-top: 1px solid #ccc; padding-top: 10px; }
-
-        /* === UTILS === */
-        .hidden { display: none !important; }
-        .flex   { display: flex; }
-        .flex-col { display: flex; flex-direction: column; }
-        .gap-10 { gap: 10px; }
-        .gap-20 { gap: 20px; }
-        .grid-2 { display: grid; grid-template-columns: 360px 1fr; gap: 24px; align-items: start; }
-
-        /* === ASESORES LAYOUT === */
-        .asesores-layout { display: flex; flex-direction: column; gap: 24px; }
-
-        .form-panel {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--r-xl);
-            backdrop-filter: blur(20px);
-            box-shadow: var(--shadow);
-            overflow: hidden;
-            transition: var(--ease);
-        }
-
-        .form-panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 28px;
-            cursor: pointer;
-            user-select: none;
-            transition: var(--ease);
-        }
-
-        .form-panel-header:hover { background: rgba(255,255,255,0.02); }
-
-        .form-panel-header-left { display: flex; align-items: center; gap: 14px; }
-
-        .form-panel-icon {
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--blue), var(--purple));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-        }
-
-        .form-panel-title { font-size: 1rem; font-weight: 700; }
-        .form-panel-subtitle { font-size: 0.8rem; color: var(--text-2); margin-top: 2px; }
-
-        .form-panel-toggle {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            transition: var(--ease);
-            flex-shrink: 0;
-        }
-
-        .form-panel.open .form-panel-toggle { transform: rotate(45deg); }
-
-        .form-panel-body {
-            padding: 0 28px 24px;
-            display: none;
-            border-top: 1px solid var(--border);
-            margin-top: 0;
-            padding-top: 24px;
-        }
-
-        .form-panel.open .form-panel-body { display: block; }
-
-        .form-inline-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
-        .form-inline-grid .span-2 { grid-column: 1 / -1; }
-
-        /* Table card full-width premium */
-        .table-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--r-xl);
-            backdrop-filter: blur(20px);
-            box-shadow: var(--shadow);
-            overflow: hidden;
-            transition: var(--ease);
-        }
-
-        .table-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 22px 28px;
-            border-bottom: 1px solid var(--border);
-            gap: 16px;
-        }
-
-        .table-card-header-left h3 { font-size: 1.05rem; font-weight: 700; }
-        .table-card-header-left p { font-size: 0.82rem; color: var(--text-2); margin-top: 3px; }
-
-        .table-card-header-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-
-        .search-input-clean {
-            background: rgba(0,0,0,0.25);
-            border: 1px solid var(--border);
-            border-radius: 30px;
-            padding: 9px 16px 9px 38px;
-            color: var(--text-1);
-            font-family: var(--font);
-            font-size: 0.875rem;
-            outline: none;
-            transition: var(--ease);
-            width: 240px;
-        }
-
-        .search-input-clean:focus {
-            border-color: var(--border-focus);
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
-            width: 300px;
-        }
-
-        .asesor-count-pill {
-            background: rgba(59,130,246,0.12);
-            border: 1px solid rgba(59,130,246,0.25);
-            color: #60a5fa;
-            padding: 5px 14px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-
-        .table-inner { padding: 0; }
-        .table-inner .table th { padding: 13px 20px; }
-        .table-inner .table td { padding: 14px 20px; }
-        .section-gap { display: flex; flex-direction: column; gap: 20px; }
-        .control-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-        .grow { flex: 1; }
-        .text-muted { color: var(--text-2); font-size: 0.875rem; }
-        .text-sm { font-size: 0.82rem; }
-
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            gap: 14px;
-            padding: 60px 30px;
-        }
-
-        .empty-icon { font-size: 3.5rem; }
-        .empty-state h3 { font-size: 1.1rem; }
-        .empty-state p { color: var(--text-2); font-size: 0.875rem; max-width: 380px; }
-
-        /* Incidencia tag */
-        .incident-row td { background: rgba(239,68,68,0.06) !important; }
-
-        /* Selection counter pill */
-        .selection-pill {
-            background: rgba(59,130,246,0.15);
-            border: 1px solid var(--blue);
-            color: #60a5fa;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        @keyframes fadeUp { from { opacity:0; transform: translateY(14px); } to { opacity:1; transform:none; } }
-        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-        @keyframes scaleIn { from { opacity:0; transform: scale(0.93); } to { opacity:1; transform: none; } }
-        @keyframes slideInRight { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform: none; } }
-    </style>
+    <link rel="stylesheet" href="style.css">
+    <!-- SweetAlert2 para Alertas Estilo Pop-up de alta fidelidad -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 
@@ -874,43 +93,43 @@
         <!-- LÍDER navigation -->
         <div id="nav-lider" class="hidden">
             <button id="btn-view-asesores" class="nav-btn" onclick="switchView('asesores')">
-                <span class="icon">👥</span> Mis Asesores
+                <i data-lucide="users" class="nav-icon"></i> Mis Asesores
             </button>
             <button id="btn-view-seleccionar" class="nav-btn" onclick="switchView('seleccionar')">
-                <span class="icon">✅</span> Autorizar Salidas de Hoy
+                <i data-lucide="check-square" class="nav-icon"></i> Autorizar Salidas de Hoy
             </button>
             <button id="btn-view-historial" class="nav-btn" onclick="switchView('historial')">
-                <span class="icon">📋</span> Historial de Movimientos
+                <i data-lucide="history" class="nav-icon"></i> Historial de Movimientos
             </button>
         </div>
 
         <!-- SISTEMAS navigation -->
         <div id="nav-sistemas" class="hidden">
             <button id="btn-view-monitor" class="nav-btn" onclick="switchView('monitor')">
-                <span class="icon">📊</span> Monitor de Salidas
+                <i data-lucide="monitor" class="nav-icon"></i> Monitor de Salidas
             </button>
             <button id="btn-view-historial" class="nav-btn" onclick="switchView('historial')">
-                <span class="icon">📋</span> Historial Completo
+                <i data-lucide="history" class="nav-icon"></i> Historial Completo
             </button>
             <button id="btn-view-incidencias" class="nav-btn" onclick="switchView('incidencias')">
-                <span class="icon">⚠️</span> Incidencias
+                <i data-lucide="alert-triangle" class="nav-icon"></i> Incidencias
             </button>
         </div>
 
         <!-- SEGURIDAD navigation -->
         <div id="nav-seguridad" class="hidden">
             <button id="btn-view-lista-seg" class="nav-btn" onclick="switchView('lista-seg')">
-                <span class="icon">🛡️</span> Lista de Salidas de Hoy
+                <i data-lucide="shield" class="nav-icon"></i> Lista de Salidas de Hoy
             </button>
             <button id="btn-view-imprimir" class="nav-btn" onclick="switchView('imprimir')">
-                <span class="icon">🖨️</span> Imprimir Registro
+                <i data-lucide="printer" class="nav-icon"></i> Imprimir Registro
             </button>
         </div>
 
         <div class="sidebar-spacer"></div>
 
         <button class="nav-btn" onclick="logout()" style="color: #f87171;">
-            <span class="icon">🚪</span> Cerrar Sesión
+            <i data-lucide="log-out" class="nav-icon" style="color: #f87171;"></i> Cerrar Sesión
         </button>
 
         <div class="sidebar-footer">
@@ -938,7 +157,7 @@
                     <div class="form-panel-header-left">
                         <div class="form-panel-icon">➕</div>
                         <div>
-                            <div class="form-panel-title">Registrar Nuevo Asesor</div>
+                            <div class="form-panel-title" id="advisor-form-title">Registrar Nuevo Asesor</div>
                             <div class="form-panel-subtitle">Haz clic para desplegar el formulario de registro</div>
                         </div>
                     </div>
@@ -964,8 +183,8 @@
                                 <input type="text" id="adv-modelo" placeholder="Ej. Lenovo ThinkPad E15">
                             </div>
                             <div class="span-2" style="display:flex; justify-content:flex-end; gap:10px; margin-top:4px;">
-                                <button type="button" class="btn btn-ghost" onclick="document.getElementById('form-advisor').reset()">Limpiar</button>
-                                <button type="submit" class="btn btn-primary" style="min-width:180px;">➕ Registrar Asesor</button>
+                                <button type="button" class="btn btn-ghost" id="advisor-form-reset-btn" onclick="resetAdvisorForm()">Limpiar</button>
+                                <button type="submit" class="btn btn-primary" style="min-width:180px;" id="advisor-form-submit-btn">➕ Registrar Asesor</button>
                             </div>
                         </div>
                     </form>
@@ -1279,6 +498,7 @@ let db = { asesores: [], movimientos: [] };
 let currentRole = null;
 let selectedAdvisors = new Set();
 let editMode = false; // true cuando se está modificando una lista ya confirmada
+let editingAdvisorId = null; // ID del asesor que se está editando
 
 // ============ INIT ============
 async function initDB() {
@@ -1451,14 +671,44 @@ function switchView(viewName) {
     if (viewName === 'imprimir')    buildPrintPreview();
 }
 
-// ============ TOAST ============
+// ============ TOAST (Ahora usando SweetAlert2 de forma Cyberpunk) ============
 function showToast(msg, type='info') {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = `toast ${type}`;
-    t.classList.remove('hidden');
-    clearTimeout(t._timer);
-    t._timer = setTimeout(() => t.classList.add('hidden'), 3500);
+    // Mapeamos los tipos a iconos de SweetAlert2
+    const iconMap = {
+        'success': 'success',
+        'error': 'error',
+        'warning': 'warning',
+        'info': 'info'
+    };
+    
+    // Mapeamos los colores de botón correspondientes a nuestro tema
+    const btnColors = {
+        'success': '#39ff14', // Verde ácido
+        'error': '#ff0055',   // Rojo láser
+        'warning': '#ffd600', // Amarillo cyber
+        'info': '#00f0ff'     // Cian
+    };
+
+    const titleMap = {
+        'success': 'Operación Exitosa',
+        'error': 'Error Detectado',
+        'warning': 'Advertencia',
+        'info': 'Información del Sistema'
+    };
+
+    Swal.fire({
+        title: titleMap[type] || 'Aviso',
+        text: msg,
+        icon: iconMap[type] || 'info',
+        confirmButtonText: 'OK',
+        background: '#050a12', // Color de nuestra sidebar
+        color: '#f8fafc',      // Texto principal
+        confirmButtonColor: btnColors[type] || '#00f0ff',
+        customClass: {
+            popup: 'swal-cyber-popup',
+            confirmButton: 'swal-cyber-btn'
+        }
+    });
 }
 
 // ============ ASESORES ============
@@ -1513,7 +763,8 @@ async function loadAsesores(query='') {
             <td style="color:var(--text-2); font-size:0.82rem;">${a.modelo || '—'}</td>
             <td><span class="badge ${a.activo ? 'badge-devuelto' : 'badge-incidencia'}">${a.activo ? 'Activo' : 'Inactivo'}</span></td>
             <td style="text-align:center; white-space:nowrap;">
-                <button class="btn btn-ghost btn-sm" onclick="toggleActiveAdvisor(${a.id})" title="${a.activo ? 'Desactivar' : 'Activar'}">
+                <button class="btn btn-ghost btn-sm" onclick="editAdvisor(${a.id})" title="Editar Asesor">✏️</button>
+                <button class="btn btn-ghost btn-sm" onclick="toggleActiveAdvisor(${a.id})" title="${a.activo ? 'Desactivar' : 'Activar'}" style="margin-left:4px;">
                     ${a.activo ? '⏸️' : '▶️'}
                 </button>
                 <button class="btn btn-danger btn-sm" onclick="deleteAdvisor(${a.id})" style="margin-left:4px;" title="Eliminar">🗑️</button>
@@ -1534,18 +785,74 @@ async function addAdvisor(evt) {
     const serial = document.getElementById('adv-serial').value.trim().toUpperCase();
     const modelo = document.getElementById('adv-modelo').value.trim();
 
-    const { error } = await sb.from('asesores').insert({ cedula, nombre, serial, modelo, activo: true });
-    if (error) {
-        if (error.code === '23505') {
-            showToast('Ya existe un asesor con esa cédula o número de serie.', 'error');
-        } else {
-            showToast('Error al registrar: ' + error.message, 'error');
+    if (editingAdvisorId !== null) {
+        // Modo Edición (UPDATE)
+        const { error } = await sb.from('asesores')
+            .update({ cedula, nombre, serial, modelo })
+            .eq('id', editingAdvisorId);
+            
+        if (error) {
+            if (error.code === '23505') {
+                showToast('Ya existe un asesor con esa cédula o número de serie.', 'error');
+            } else {
+                showToast('Error al actualizar: ' + error.message, 'error');
+            }
+            return;
         }
-        return;
+        showToast(`${nombre} actualizado correctamente.`, 'success');
+        resetAdvisorForm();
+    } else {
+        // Modo Registro (INSERT)
+        const { error } = await sb.from('asesores').insert({ cedula, nombre, serial, modelo, activo: true });
+        if (error) {
+            if (error.code === '23505') {
+                showToast('Ya existe un asesor con esa cédula o número de serie.', 'error');
+            } else {
+                showToast('Error al registrar: ' + error.message, 'error');
+            }
+            return;
+        }
+        showToast(`${nombre} registrado correctamente.`, 'success');
+        document.getElementById('form-advisor').reset();
     }
-    showToast(`${nombre} registrado correctamente.`, 'success');
-    document.getElementById('form-advisor').reset();
     loadAsesores();
+}
+
+function resetAdvisorForm() {
+    document.getElementById('form-advisor').reset();
+    if (editingAdvisorId !== null) {
+        editingAdvisorId = null;
+        document.getElementById('advisor-form-title').textContent = 'Registrar Nuevo Asesor';
+        document.getElementById('advisor-form-submit-btn').innerHTML = '➕ Registrar Asesor';
+        document.getElementById('advisor-form-reset-btn').textContent = 'Limpiar';
+    }
+}
+
+function editAdvisor(id) {
+    const a = db.asesores.find(x => x.id === id);
+    if (!a) return;
+    
+    editingAdvisorId = id;
+    
+    // Rellenar formulario
+    document.getElementById('adv-cedula').value = a.cedula;
+    document.getElementById('adv-nombre').value = a.nombre;
+    document.getElementById('adv-serial').value = a.serial;
+    document.getElementById('adv-modelo').value = a.modelo || '';
+    
+    // Cambiar UI del formulario
+    document.getElementById('advisor-form-title').textContent = 'Editar Datos del Asesor';
+    document.getElementById('advisor-form-submit-btn').innerHTML = '💾 Guardar Cambios';
+    document.getElementById('advisor-form-reset-btn').textContent = '❌ Cancelar';
+    
+    // Desplegar el panel del formulario si está cerrado
+    const panel = document.getElementById('form-panel-wrap');
+    if (panel && !panel.classList.contains('open')) {
+        toggleFormPanel();
+    }
+    
+    // Enfocar el primer input
+    document.getElementById('adv-cedula').focus();
 }
 
 async function toggleActiveAdvisor(id) {
@@ -1726,6 +1033,15 @@ function buildConfirmedCard(a, m) {
     if (m.estado === 'Devuelto') badgeClass = 'badge-devuelto';
     if (m.estado === 'Incidencia') badgeClass = 'badge-incidencia';
 
+    const canCancel = m.estado === 'Autorizado';
+    const actionsHtml = canCancel 
+        ? `<div class="adv-actions" style="margin-top:12px;">
+               <button class="btn btn-danger btn-sm w-full" onclick="cancelarSalidaDirecto('${m.id}', '${a.nombre}')">
+                   🚫 Cancelar Autorización
+               </button>
+           </div>`
+        : '';
+
     card.innerHTML = `
         <div class="adv-card-top">
             <div>
@@ -1739,6 +1055,7 @@ function buildConfirmedCard(a, m) {
             <div class="detail-row"><span>Salida</span><span>${m.hora_salida || '--:--'}</span></div>
             <div class="detail-row"><span>Devolución</span><span>${m.hora_devolucion || 'Pendiente'}</span></div>
         </div>
+        ${actionsHtml}
     `;
     return card;
 }
@@ -1838,6 +1155,56 @@ function cancelEditMode() {
     editMode = false;
     selectedAdvisors.clear();
     loadSeleccion();
+}
+
+async function cancelarSalidaDirecto(movId, name) {
+    const result = await Swal.fire({
+        title: '¿Cancelar Autorización?',
+        text: `¿Estás seguro de que deseas quitar a "${name}" de la lista de hoy?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, quitar',
+        cancelButtonText: 'No, mantener',
+        background: '#050a12',
+        color: '#f8fafc',
+        confirmButtonColor: '#ff0055',
+        cancelButtonColor: '#475569'
+    });
+
+    if (result.isConfirmed) {
+        const { error } = await sb.from('movimientos').delete().eq('id', movId);
+        if (error) {
+            showToast('Error al quitar: ' + error.message, 'error');
+        } else {
+            showToast(`${name} ha sido retirado de la lista.`, 'success');
+            loadSeleccion();
+        }
+    }
+}
+
+async function cancelarSalidaDesdeTI(movId, name) {
+    const result = await Swal.fire({
+        title: '¿Anular Salida?',
+        text: `¿Deseas anular la autorización de salida para "${name}"? Se eliminará del registro de hoy.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, anular',
+        cancelButtonText: 'No, mantener',
+        background: '#050a12',
+        color: '#f8fafc',
+        confirmButtonColor: '#ff0055',
+        cancelButtonColor: '#475569'
+    });
+
+    if (result.isConfirmed) {
+        const { error } = await sb.from('movimientos').delete().eq('id', movId);
+        if (error) {
+            showToast('Error al anular: ' + error.message, 'error');
+        } else {
+            showToast(`Autorización de ${name} anulada.`, 'success');
+            loadMonitor();
+        }
+    }
 }
 
 async function resetTodayList() {
@@ -1971,6 +1338,9 @@ function renderMonitorGrid(movs) {
                 </button>
                 <button class="btn btn-rose btn-sm" ${canIncident ? '' : 'disabled'} onclick="openIncidentModal('${m.id}')" title="Reportar incidencia">
                     ⚠️
+                </button>
+                <button class="btn btn-danger btn-sm" ${canCheckout ? '' : 'disabled'} onclick="cancelarSalidaDesdeTI('${m.id}', '${a.nombre}')" title="Cancelar Autorización">
+                    🚫 Anular
                 </button>
             </div>
         `;
@@ -2402,6 +1772,9 @@ document.getElementById('historial-fecha').value = todayStr();
 
 // Inicializar Supabase al cargar
 initDB();
+
+// Renderizar iconos vectoriales Lucide
+lucide.createIcons();
 </script>
 </body>
 </html>
