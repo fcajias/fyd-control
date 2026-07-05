@@ -467,9 +467,11 @@
                         <h3 class="text-sm font-extrabold uppercase tracking-wider text-gray-100">Vista Previa de Impresión</h3>
                         <p class="text-xs text-gray-400 mt-1">Hoja de control de retiro de equipos informáticos</p>
                     </div>
-                    <button class="btn btn-primary bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white border-none py-2 px-5 rounded-lg text-xs" onclick="printSecurityList()">
-                        <i class="fa-solid fa-print mr-2"></i> Imprimir Ahora
-                    </button>
+                    <div id="print-header-actions" class="flex gap-3">
+                        <button class="btn btn-primary bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white border-none py-2 px-5 rounded-lg text-xs" onclick="printSecurityList()">
+                            <i class="fa-solid fa-print mr-2"></i> Imprimir Ahora
+                        </button>
+                    </div>
                 </div>
                 <div id="print-preview-container" class="bg-white text-black rounded-lg p-6 font-sans min-h-[300px] shadow-inner">
                     <div id="print-preview-content"></div>
@@ -611,6 +613,7 @@ let currentRole = null;
 let selectedAdvisors = new Set();
 let editMode = false; // true cuando se está modificando una lista ya confirmada
 let editingAdvisorId = null; // ID del asesor que se está editando
+let liderSignatureTodayBase64 = null;
 
 // ============ INIT ============
 async function initDB() {
@@ -780,7 +783,7 @@ function switchView(viewName) {
     if (viewName === 'monitor')     loadMonitor();
     if (viewName === 'incidencias') loadIncidencias();
     if (viewName === 'lista-seg')   loadSeguridad();
-    if (viewName === 'imprimir')    buildPrintPreview();
+    if (viewName === 'imprimir')    loadLiderSignatureAndPreview();
 }
 
 // ============ TOAST (Ahora usando SweetAlert2 de forma Cyberpunk) ============
@@ -1985,6 +1988,9 @@ async function loadSeguridad() {
 
 // ============ PRINT ============
 function buildPrintHTML() {
+    const sigLiderHTML = liderSignatureTodayBase64
+        ? `<img src='${liderSignatureTodayBase64}' style='max-height: 55px; max-width: 150px; display: block; margin: 0 auto; filter: brightness(0);' alt='Firma Líder' />`
+        : '';
     const today = todayStr();
     const movs = allMonitorMovs.length > 0
         ? allMonitorMovs.filter(m => m.fecha === today)
@@ -2080,7 +2086,7 @@ function buildPrintHTML() {
 
                 <div class="sig-row">
                     <div class="sig-block">
-                        <div class="sig-space"></div>
+                        <div class="sig-space" style="display: flex; align-items: center; justify-content: center; overflow: hidden; height: 65px;">${sigLiderHTML}</div>
                         <div class="sig-line"></div>
                         <div class="sig-label"><strong>Responsable del Área</strong></div>
                         <div class="sig-name">Sangucho Carolina</div>
@@ -2099,6 +2105,73 @@ function buildPrintHTML() {
 
 function buildPrintPreview() {
     document.getElementById('print-preview-content').innerHTML = buildPrintHTML();
+}
+
+async function loadLiderSignatureAndPreview() {
+    const today = todayStr();
+    try {
+        const { data, error } = await sb.from('firmas_diarias').select('firma_lider').eq('fecha', today).maybeSingle();
+        if (!error && data) {
+            liderSignatureTodayBase64 = data.firma_lider;
+        } else {
+            liderSignatureTodayBase64 = null;
+        }
+    } catch(e) {
+        console.warn('Error loading leader signature:', e);
+        liderSignatureTodayBase64 = null;
+    }
+    buildPrintPreview();
+    renderPrintHeaderActions();
+}
+
+function renderPrintHeaderActions() {
+    const container = document.getElementById('print-header-actions');
+    if (!container) return;
+    
+    let signatureBtnHTML = '';
+    if (liderSignatureTodayBase64) {
+        signatureBtnHTML = `
+            <button class="btn btn-success bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg text-xs flex items-center gap-1.5" onclick="openLiderSignatureModal()">
+                <i class="fa-solid fa-file-circle-check"></i> Control Firmado ✓
+            </button>
+        `;
+    } else {
+        signatureBtnHTML = `
+            <button class="btn btn-primary bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold py-2 px-4 rounded-lg text-xs flex items-center gap-1.5 animate-pulse" onclick="openLiderSignatureModal()">
+                <i class="fa-solid fa-signature"></i> ✍️ Firmar como Líder
+            </button>
+        `;
+    }
+
+    container.innerHTML = `
+        ${signatureBtnHTML}
+        <button class="btn btn-primary bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white border-none py-2 px-5 rounded-lg text-xs flex items-center gap-1.5" onclick="printSecurityList()">
+            <i class="fa-solid fa-print"></i> Imprimir Ahora
+        </button>
+    `;
+}
+
+function openLiderSignatureModal() {
+    document.getElementById('signature-mov-id').value = 'lider-control';
+    document.getElementById('signature-type').value = 'lider';
+    document.getElementById('signature-asesor-name').value = 'Carolina Sangucho (Líder)';
+    document.getElementById('signature-flow-type').textContent = 'VALIDACIÓN DE CONTROL DE HOY (LÍDER)';
+    document.getElementById('signature-obs').value = '';
+    document.getElementById('signature-obs').closest('.form-group').classList.add('hidden');
+
+    document.getElementById('signature-modal').classList.remove('hidden');
+
+    setTimeout(() => {
+        if (!signatureCanvas) {
+            initSignatureCanvas();
+        } else {
+            clearSignatureCanvas();
+            signatureCtx.strokeStyle = '#ec4899'; // rosa neón
+            signatureCtx.lineWidth = 3.5;
+            signatureCtx.lineCap = 'round';
+            signatureCtx.lineJoin = 'round';
+        }
+    }, 100);
 }
 
 function printSecurityList() {
