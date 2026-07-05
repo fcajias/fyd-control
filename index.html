@@ -446,9 +446,11 @@
                         <h3 class="text-sm font-extrabold uppercase tracking-wider text-gray-100">Asesores Autorizados para Hoy</h3>
                         <p id="seg-date-label" class="text-xs text-gray-400 mt-1">Lista aprobada por la líder del área</p>
                     </div>
-                    <button class="btn btn-primary bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white border-none py-2 px-5 rounded-lg text-xs" onclick="printSecurityList()">
-                        <i class="fa-solid fa-print mr-2"></i> Imprimir Hoja de Control
-                    </button>
+                    <div id="seg-header-actions" class="flex gap-3">
+                        <button class="btn btn-primary bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white border-none py-2 px-5 rounded-lg text-xs" onclick="printSecurityList()">
+                            <i class="fa-solid fa-print mr-2"></i> Imprimir Hoja de Control
+                        </button>
+                    </div>
                 </div>
                 <div id="seg-grid" class="advisor-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
                 <div id="seg-empty" class="empty-state hidden flex flex-col items-center justify-center p-12 text-center text-gray-400">
@@ -1778,6 +1780,8 @@ function openSignatureKiosk(movId, type, name) {
 
 function closeSignatureModal() {
     document.getElementById('signature-modal').classList.add('hidden');
+    const obsGroup = document.getElementById('signature-obs').closest('.form-group');
+    if (obsGroup) obsGroup.classList.remove('hidden');
 }
 
 async function confirmSignature() {
@@ -1794,6 +1798,29 @@ async function confirmSignature() {
     const name  = document.getElementById('signature-asesor-name').value;
     const obsVal = document.getElementById('signature-obs').value.trim();
     const signatureBase64 = signatureCanvas.toDataURL();
+
+    if (type === 'lider') {
+        try {
+            const today = todayStr();
+            const { error } = await sb.from('firmas_diarias').upsert({
+                fecha: today,
+                firma_lider: signatureBase64
+            });
+            if (error) throw error;
+
+            closeSignatureModal();
+            showToast('✅ Control diario validado y firmado por la Líder.', 'success');
+            
+            if (currentRole === 'seguridad') {
+                loadSeguridad();
+            } else {
+                loadLiderSignatureAndPreview();
+            }
+        } catch(err) {
+            showToast('Error al registrar firma de la Líder: ' + err.message, 'error');
+        }
+        return;
+    }
 
     let currentNotas = '';
     try {
@@ -1884,6 +1911,44 @@ async function loadSeguridad() {
 
     const { data, error } = await sb.from('movimientos').select('*, asesores(*)').eq('fecha', today);
     if (error) { showToast('Error: ' + error.message, 'error'); return; }
+
+    let hasLiderSigned = false;
+    try {
+        const { data: signData, error: signErr } = await sb.from('firmas_diarias').select('firma_lider').eq('fecha', today).maybeSingle();
+        if (!signErr && signData && signData.firma_lider) {
+            hasLiderSigned = true;
+            liderSignatureTodayBase64 = signData.firma_lider;
+        } else {
+            liderSignatureTodayBase64 = null;
+        }
+    } catch(e) {
+        console.warn('Error loading leader signature:', e);
+        liderSignatureTodayBase64 = null;
+    }
+
+    const segActions = document.getElementById('seg-header-actions');
+    if (segActions) {
+        let liderBtnHTML = '';
+        if (hasLiderSigned) {
+            liderBtnHTML = `
+                <button class="btn btn-success bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-lg text-xs flex items-center gap-1.5" onclick="openLiderSignatureModal()">
+                    <i class="fa-solid fa-file-circle-check"></i> Validado por Líder ✓
+                </button>
+            `;
+        } else {
+            liderBtnHTML = `
+                <button class="btn btn-primary bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold py-2 px-4 rounded-lg text-xs flex items-center gap-1.5 animate-pulse" onclick="openLiderSignatureModal()">
+                    <i class="fa-solid fa-signature"></i> ✍️ Firmar Líder
+                </button>
+            `;
+        }
+        segActions.innerHTML = `
+            ${liderBtnHTML}
+            <button class="btn btn-primary bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white border-none py-2 px-5 rounded-lg text-xs flex items-center gap-1.5" onclick="printSecurityList()">
+                <i class="fa-solid fa-print"></i> Imprimir Hoja de Control
+            </button>
+        `;
+    }
 
     const movs = (data || []).map(m => ({ ...m, asesor: m.asesores })).filter(m => m.asesor);
     document.getElementById('seg-total').textContent      = movs.length;
