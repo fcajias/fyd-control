@@ -573,6 +573,11 @@
             </button>
         </div>
         
+        <div class='form-group flex flex-col gap-1.5 mb-5'>
+            <label class='text-[10px] font-bold text-cyan-400 uppercase tracking-wider'>Observaciones / Novedades de Seguridad (Opcional)</label>
+            <input type='text' id='signature-obs' placeholder='Ej: Sin cargador, carcasa rayada...' class='bg-black/50 border border-white/10 rounded-lg p-2.5 text-xs text-gray-100 outline-none focus:border-cyan-400'>
+        </div>
+        
         <input type='hidden' id='signature-mov-id'>
         <input type='hidden' id='signature-type'> <!-- 'salida' or 'devolucion' -->
         <input type='hidden' id='signature-asesor-name'>
@@ -1429,6 +1434,10 @@ function renderMonitorGrid(movs) {
         const canCheckin   = m.estado === 'En Teletrabajo';
         const canIncident  = m.estado !== 'Devuelto' && m.estado !== 'Incidencia';
 
+        const obsSnippet = m.notas 
+            ? `<div class="detail-row text-cyan-400/80"><span>Observaciones</span><span>${m.notas}</span></div>` 
+            : '';
+
         const card = document.createElement('div');
         card.className = 'card advisor-card' + (isOverdue ? ' alert-blink' : '');
         card.innerHTML = `
@@ -1445,6 +1454,7 @@ function renderMonitorGrid(movs) {
                 <div class="detail-row"><span>Hora de Salida</span><span>${m.hora_salida || '--:--'}</span></div>
                 <div class="detail-row"><span>Fecha Retorno</span><span>${m.fecha_devolucion || 'Pendiente'}</span></div>
                 <div class="detail-row"><span>Hora Retorno</span><span>${m.hora_devolucion || '--:--'}</span></div>
+                ${obsSnippet}
             </div>
             <div class="adv-actions">
                 <button class="btn btn-warning btn-sm" ${canCheckout ? '' : 'disabled'} onclick="openCheckoutModal('${m.id}')">
@@ -1745,6 +1755,7 @@ function openSignatureKiosk(movId, type, name) {
     document.getElementById('signature-mov-id').value = movId;
     document.getElementById('signature-type').value = type;
     document.getElementById('signature-asesor-name').value = name;
+    document.getElementById('signature-obs').value = '';
     document.getElementById('signature-flow-type').textContent = type === 'salida' ? 'SALIDA FÍSICA' : 'DEVOLUCIÓN DE EQUIPO';
 
     document.getElementById('signature-modal').classList.remove('hidden');
@@ -1778,7 +1789,18 @@ async function confirmSignature() {
     const movId = document.getElementById('signature-mov-id').value;
     const type  = document.getElementById('signature-type').value;
     const name  = document.getElementById('signature-asesor-name').value;
+    const obsVal = document.getElementById('signature-obs').value.trim();
     const signatureBase64 = signatureCanvas.toDataURL();
+
+    let currentNotas = '';
+    try {
+        const { data: currentMov, error: errFetch } = await sb.from('movimientos').select('notas').eq('id', movId).single();
+        if (!errFetch && currentMov) {
+            currentNotas = currentMov.notas || '';
+        }
+    } catch (e) {
+        console.warn('Error fetching current notes:', e);
+    }
 
     let updateData = {};
     if (type === 'salida') {
@@ -1787,6 +1809,9 @@ async function confirmSignature() {
             firma_salida: signatureBase64,
             estado: 'En Teletrabajo'
         };
+        if (obsVal) {
+            updateData.notas = obsVal;
+        }
     } else {
         updateData = {
             fecha_devolucion: todayStr(),
@@ -1794,6 +1819,9 @@ async function confirmSignature() {
             firma_devolucion: signatureBase64,
             estado: 'Devuelto'
         };
+        if (obsVal) {
+            updateData.notas = currentNotas ? `${currentNotas} | Regreso: ${obsVal}` : obsVal;
+        }
     }
 
     try {
@@ -1976,6 +2004,18 @@ function buildPrintHTML() {
             ? `<img src='${m.firma_devolucion}' style='max-height: 35px; max-width: 100px; display: block; margin: 0 auto; filter: brightness(0);' alt='Firma Ingreso' />` 
             : '';
 
+        let obsText = '';
+        if (m.notas) {
+            obsText += m.notas;
+        }
+        if (m.incidencia) {
+            if (obsText) obsText += ' | ';
+            obsText += `⚠️ INCIDENCIA: ${m.incidencia.tipo} (${m.incidencia.descripcion})`;
+        }
+        if (!obsText && m.estado === 'Devuelto') {
+            obsText = '✓ Devuelto';
+        }
+
         return `
             <tr>
                 <td style="text-align:center;">${i+1}</td>
@@ -1987,7 +2027,7 @@ function buildPrintHTML() {
                 <td style="text-align:center;">${m.hora_salida || ''}</td>
                 <td style="text-align:center; vertical-align:middle; padding:2px;">${sigDevolucion}</td>
                 <td style="text-align:center;">${m.fecha_devolucion || ''}</td>
-                <td style="color:${m.incidencia ? '#c0392b' : 'inherit'}; font-size:9px;">${m.incidencia ? '⚠️ ' + m.incidencia.tipo + (m.incidencia.descripcion ? ': ' + m.incidencia.descripcion : '') : (m.estado === 'Devuelto' ? '✓ Devuelto' : '')}</td>
+                <td style="color:${m.incidencia ? '#c0392b' : 'inherit'}; font-size:9px; vertical-align:middle;">${obsText}</td>
             </tr>
         `;
     }).join('');
