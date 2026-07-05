@@ -176,8 +176,22 @@
         </div>
     </aside>
 
+    <!-- Sidebar Overlay for mobile -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden transition-opacity duration-300" onclick="toggleMobileSidebar()"></div>
+
     <!-- Main Content -->
     <main class="main flex flex-col gap-6 p-8 overflow-y-auto h-screen" id="main-content">
+        <!-- Mobile Header Topbar -->
+        <div class="mobile-header lg:hidden flex items-center justify-between p-4 bg-cyber-sidebar border border-white/5 rounded-xl mb-2 z-30 shrink-0 shadow-lg">
+            <div class="flex items-center gap-3">
+                <button class="text-cyan-400 text-lg hover:text-cyan-300 focus:outline-none" onclick="toggleMobileSidebar()">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <span class="text-xs font-bold text-gray-100 uppercase tracking-widest">FYD Control</span>
+            </div>
+            <div class="text-[10px] text-gray-400 font-mono" id="mobile-role-label">Líder del Área</div>
+        </div>
+
         <header class="page-header flex justify-between items-center border-b border-white/5 pb-5 relative shrink-0">
             <div>
                 <h2 id="view-title" class="text-xl font-extrabold uppercase tracking-wide text-gray-100">—</h2>
@@ -732,6 +746,28 @@ function setupRoleUI() {
         labelEl.textContent = 'Control de acceso';
         switchView('lista-seg');
     }
+
+    const mobileLabel = document.getElementById('mobile-role-label');
+    if (mobileLabel) {
+        mobileLabel.textContent = currentRole === 'lider' ? 'Líder del Área' : (currentRole === 'sistemas' ? 'Sistemas (TI)' : 'Seguridad');
+    }
+}
+
+function toggleMobileSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (!sidebar || !overlay) return;
+    
+    const isOpen = sidebar.classList.contains('active');
+    if (isOpen) {
+        sidebar.classList.remove('active');
+        overlay.classList.add('hidden');
+        overlay.classList.remove('opacity-100');
+    } else {
+        sidebar.classList.add('active');
+        overlay.classList.remove('hidden');
+        setTimeout(() => overlay.classList.add('opacity-100'), 10);
+    }
 }
 
 // ============ VIEW SWITCHER ============
@@ -746,6 +782,17 @@ const VIEW_META = {
 };
 
 function switchView(viewName) {
+    // Auto-cerrar sidebar en móviles/tablets al navegar
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar && sidebar.classList.contains('active')) {
+        sidebar.classList.remove('active');
+        if (overlay) {
+            overlay.classList.add('hidden');
+            overlay.classList.remove('opacity-100');
+        }
+    }
+
     const allViews = ['asesores','seleccionar','historial','monitor','incidencias','lista-seg','imprimir'];
     allViews.forEach(v => {
         const el = document.getElementById(`view-${v}`);
