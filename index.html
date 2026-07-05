@@ -415,6 +415,16 @@
 
         <!-- ======== VISTA: LISTA SEGURIDAD ======== -->
         <section id="view-lista-seg" class="section-gap hidden flex flex-col gap-6">
+            <!-- KIOSK INSTRUCTIONS -->
+            <div class="kiosk-banner bg-cyan-950/20 border border-cyan-500/30 rounded-xl p-4 flex items-center gap-4 animate-pulse">
+                <div class="kiosk-icon text-3xl text-cyan-400">
+                    <i class="fa-solid fa-tablet-screen-button"></i>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-cyan-400 uppercase tracking-widest">Estación de Autoservicio Digital (Cero Papel)</h4>
+                    <p class="text-[11px] text-gray-300 mt-0.5">Asesor: Busca tu nombre abajo y toca tu tarjeta para firmar tu salida o regreso de equipo.</p>
+                </div>
+            </div>
             <div class="stats-row grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div class="stat-box stat-blue bg-black/35 border-l-4 border-l-cyan-500 border border-white/5 rounded-lg p-4 text-center">
                     <span class="stat-num text-xl font-bold font-mono text-cyan-400" id="seg-total">0</span>
@@ -519,19 +529,67 @@
         <h3 class="text-lg font-bold text-cyan-400 uppercase tracking-wider mb-2 flex items-center gap-2">
             <i class="fa-solid fa-arrow-down-to-bracket"></i> Registrar Devolución
         </h3>
-        <p id="checkin-modal-desc" class="text-xs text-gray-400 mb-6">Confirma la devolución del equipo.</p>
-        <input type="hidden" id="checkin-mov-id">
-        <div class="modal-actions flex justify-end gap-3">
-            <button class="btn btn-secondary bg-white/5 border-none hover:bg-white/10 text-xs py-2 px-4" onclick="closeCheckinModal()">Cancelar</button>
-            <button class="btn btn-success bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 border-none text-white font-bold py-2 px-5 rounded-lg text-xs" onclick="confirmCheckin()">Confirmar</button>
+        <p id='checkin-modal-desc' class='text-xs text-gray-400 mb-6'>Confirma la devolución del equipo.</p>
+        <input type='hidden' id='checkin-mov-id'>
+        <div class='modal-actions flex justify-end gap-3'>
+            <button class='btn btn-secondary bg-white/5 border-none hover:bg-white/10 text-xs py-2 px-4' onclick='closeCheckinModal()'>Cancelar</button>
+            <button class='btn btn-success bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 border-none text-white font-bold py-2 px-5 rounded-lg text-xs' onclick='confirmCheckin()'>Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== HISTORY SERIAL CLINIC MODAL ===== -->
+<div id='history-serial-modal' class='modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4'>
+    <div class='modal relative bg-cyber-sidebar border border-cyan-500/20 rounded-xl p-7 w-full max-w-[550px] shadow-2xl animate-scaleUp'>
+        <h3 class='text-lg font-bold text-cyan-400 uppercase tracking-wider mb-2 flex items-center gap-2'>
+            <i class='fa-solid fa-history'></i> Historial Clínico del Equipo
+        </h3>
+        <p class='text-xs text-gray-400 mb-5'>Movimientos e incidencias registrados para el serial: <strong id='history-serial-title' class='text-cyan-400 font-mono'></strong></p>
+        <div class='max-h-[350px] overflow-y-auto pr-2 flex flex-col gap-4' id='history-serial-timeline-container'>
+            <!-- Timeline elements will be rendered dynamically here -->
+        </div>
+        <div class='modal-actions flex justify-end mt-6'>
+            <button class='btn btn-secondary bg-white/5 border-none hover:bg-white/10 text-xs py-2 px-5' onclick='closeHistorySerialModal()'>Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== SIGNATURE DIGITAL MODAL ===== -->
+<div id='signature-modal' class='modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4'>
+    <div class='modal relative bg-cyber-sidebar border border-cyan-500/20 rounded-xl p-7 w-full max-w-[460px] shadow-2xl animate-scaleUp'>
+        <h3 class='text-lg font-bold text-cyan-400 uppercase tracking-wider mb-2 flex items-center gap-2'>
+            <i class='fa-solid fa-pen-nib'></i> Registrar Firma Digital
+        </h3>
+        <p class='text-xs text-gray-400 mb-4'>Por favor, dibuja tu firma táctil en el recuadro para validar tu <span id='signature-flow-type' class='font-bold text-cyan-400'></span>.</p>
+        
+        <div class='signature-container mb-4'>
+            <canvas id='signature-canvas' class='signature-pad-canvas'></canvas>
+        </div>
+        
+        <div class='flex justify-between items-center mb-6'>
+            <span class='text-[10px] text-gray-500 uppercase tracking-wider'><i class='fa-solid fa-hand-pointer mr-1'></i> Usa el dedo o lápiz táctil</span>
+            <button class='btn btn-secondary hover:bg-white/5 text-[10px] py-1 px-3 border border-white/10 rounded' onclick='clearSignatureCanvas()'>
+                <i class='fa-solid fa-eraser mr-1'></i> Limpiar Recuadro
+            </button>
+        </div>
+        
+        <input type='hidden' id='signature-mov-id'>
+        <input type='hidden' id='signature-type'> <!-- 'salida' or 'devolucion' -->
+        <input type='hidden' id='signature-asesor-name'>
+        
+        <div class='modal-actions flex justify-end gap-3'>
+            <button class='btn btn-secondary bg-white/5 border-none hover:bg-white/10 text-xs py-2 px-4' onclick='closeSignatureModal()'>Cancelar</button>
+            <button class='btn btn-success bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 border-none text-white font-bold py-2 px-5 rounded-lg text-xs' onclick='confirmSignature()'>
+                <i class='fa-solid fa-check-double mr-1.5'></i> Confirmar Registro
+            </button>
         </div>
     </div>
 </div>
 
 <!-- ===== TOAST ===== -->
-<div id="toast" class="toast hidden"></div>
+<div id='toast' class='toast hidden'></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'></script>
 <script>
 // ==========================================================================
 //  SUPABASE — Base de datos en la nube
@@ -808,7 +866,7 @@ async function loadAsesores(query='') {
         tr.innerHTML = `
             <td style="font-family:var(--mono); font-size:0.8rem;">${a.cedula}</td>
             <td><strong>${a.nombre}</strong></td>
-            <td style="font-family:var(--mono); font-size:0.82rem;">${a.serial}</td>
+            <td style="font-family:var(--mono); font-size:0.82rem;"><span class="text-cyan-400 font-mono underline cursor-pointer hover:text-pink-400" onclick="showHistorySerial('${a.serial}')" title="Ver Historial Clínico">${a.serial}</span></td>
             <td style="color:var(--text-2); font-size:0.82rem;">${a.modelo || '—'}</td>
             <td><span class="badge ${a.activo ? 'badge-devuelto' : 'badge-incidencia'}">${a.activo ? 'Activo' : 'Inactivo'}</span></td>
             <td style="text-align:center; white-space:nowrap;">
@@ -1353,7 +1411,17 @@ function renderMonitorGrid(movs) {
     movs.forEach(m => {
         const a = m.asesor;
         let badgeClass = 'badge-seleccionado';
-        if (m.estado === 'En Teletrabajo') badgeClass = 'badge-teletrabajo';
+        let badgeText = m.estado;
+        let isOverdue = false;
+
+        if (m.estado === 'En Teletrabajo') {
+            badgeClass = 'badge-teletrabajo';
+            if (m.fecha < todayStr()) {
+                badgeClass = 'bg-red-500/20 text-red-400 border border-red-500/40 font-bold';
+                badgeText = '⚠️ RETRASADO';
+                isOverdue = true;
+            }
+        }
         if (m.estado === 'Devuelto') badgeClass = 'badge-devuelto';
         if (m.estado === 'Incidencia') badgeClass = 'badge-incidencia';
 
@@ -1362,17 +1430,17 @@ function renderMonitorGrid(movs) {
         const canIncident  = m.estado !== 'Devuelto' && m.estado !== 'Incidencia';
 
         const card = document.createElement('div');
-        card.className = 'card advisor-card';
+        card.className = 'card advisor-card' + (isOverdue ? ' alert-blink' : '');
         card.innerHTML = `
             <div class="adv-card-top">
                 <div>
                     <div class="adv-name">${a.nombre}</div>
                     <div class="adv-cedula">CI: ${a.cedula}</div>
                 </div>
-                <span class="badge ${badgeClass}">${m.estado}</span>
+                <span class="badge ${badgeClass}">${badgeText}</span>
             </div>
             <div class="adv-details">
-                <div class="detail-row"><span>N° de Serie</span><span>${a.serial}</span></div>
+                <div class="detail-row"><span>N° de Serie</span><span class="text-cyan-400 font-mono underline cursor-pointer hover:text-pink-400" onclick="showHistorySerial('${a.serial}')" title="Ver Historial Clínico">${a.serial}</span></div>
                 <div class="detail-row"><span>Modelo</span><span>${a.modelo || '—'}</span></div>
                 <div class="detail-row"><span>Hora de Salida</span><span>${m.hora_salida || '--:--'}</span></div>
                 <div class="detail-row"><span>Fecha Retorno</span><span>${m.fecha_devolucion || 'Pendiente'}</span></div>
@@ -1501,6 +1569,250 @@ async function confirmIncident() {
     loadIncidencias();
 }
 
+// ============ MODAL HISTORIAL CLÍNICO DE EQUIPOS ============
+async function showHistorySerial(serial) {
+    document.getElementById('history-serial-title').textContent = serial;
+    const container = document.getElementById('history-serial-timeline-container');
+    container.innerHTML = '<div class="text-xs text-cyan-400 animate-pulse text-center py-4">Obteniendo registro clínico...</div>';
+    document.getElementById('history-serial-modal').classList.remove('hidden');
+
+    try {
+        const { data: asesores, error: errA } = await sb.from('asesores').select('id, nombre').eq('serial', serial);
+        if (errA) throw errA;
+        if (!asesores || asesores.length === 0) {
+            container.innerHTML = '<div class="text-xs text-rose-400 text-center py-4">No se encontró asesor vinculado a este serial.</div>';
+            return;
+        }
+        const ids = asesores.map(x => x.id);
+
+        const { data: movs, error: errM } = await sb.from('movimientos').select('*').in('id_asesor', ids).order('fecha', { ascending: false }).order('created_at', { ascending: false });
+        if (errM) throw errM;
+
+        container.innerHTML = '';
+        if (!movs || movs.length === 0) {
+            container.innerHTML = '<div class="text-xs text-gray-400 text-center py-4">Este equipo no registra movimientos ni incidencias previas.</div>';
+            return;
+        }
+
+        movs.forEach(m => {
+            const dateLabel = m.fecha;
+            
+            // Item de Autorización
+            const itemAuth = document.createElement('div');
+            itemAuth.className = 'timeline-item';
+            itemAuth.innerHTML = `
+                <div class="timeline-icon"><i class="fa-solid fa-file-signature text-[8px] text-cyan-400"></i></div>
+                <div class="timeline-content">
+                    <span class="timeline-time">${dateLabel} — Autorizado</span>
+                    <p class="text-[11px] text-gray-200 mt-1">Salida autorizada por Líder de Área.</p>
+                </div>
+            `;
+            container.appendChild(itemAuth);
+
+            // Item de Salida
+            if (m.hora_salida) {
+                const itemSalida = document.createElement('div');
+                itemSalida.className = 'timeline-item success';
+                const firmaSnippet = m.firma_salida 
+                    ? `<div class="mt-2 border border-cyan-500/10 rounded p-1.5 bg-black/40 inline-block"><img src="${m.firma_salida}" class="h-10 object-contain filter invert opacity-80" alt="Firma de Salida"/></div>` 
+                    : '<span class="text-[9px] text-gray-500 italic block mt-1">(Firmado en formato físico)</span>';
+                
+                itemSalida.innerHTML = `
+                    <div class="timeline-icon"><i class="fa-solid fa-arrow-up text-[8px] text-emerald-400"></i></div>
+                    <div class="timeline-content">
+                        <span class="timeline-time">${dateLabel} ${m.hora_salida} — Salida física</span>
+                        <p class="text-[11px] text-gray-200 mt-1">Equipo retirado de la oficina.</p>
+                        ${firmaSnippet}
+                    </div>
+                `;
+                container.appendChild(itemSalida);
+            }
+
+            // Item de Incidencia
+            if (m.incidencia) {
+                const itemInc = document.createElement('div');
+                itemInc.className = 'timeline-item danger';
+                itemInc.innerHTML = `
+                    <div class="timeline-icon"><i class="fa-solid fa-triangle-exclamation text-[8px] text-red-500"></i></div>
+                    <div class="timeline-content">
+                        <span class="timeline-time">${m.incidencia.reportado_en || dateLabel} — INCIDENCIA: ${m.incidencia.tipo}</span>
+                        <p class="text-[11px] text-rose-300 mt-1 font-bold">${m.incidencia.descripcion}</p>
+                        <span class="text-[9px] text-gray-400 block mt-1">Reportado por: ${m.incidencia.reportado_por || 'TI'}</span>
+                    </div>
+                `;
+                container.appendChild(itemInc);
+            }
+
+            // Item de Devolución
+            if (m.hora_devolucion) {
+                const itemDev = document.createElement('div');
+                itemDev.className = 'timeline-item success';
+                const firmaSnippet = m.firma_devolucion 
+                    ? `<div class="mt-2 border border-cyan-500/10 rounded p-1.5 bg-black/40 inline-block"><img src="${m.firma_devolucion}" class="h-10 object-contain filter invert opacity-80" alt="Firma de Retorno"/></div>` 
+                    : '<span class="text-[9px] text-gray-500 italic block mt-1">(Firmado en formato físico)</span>';
+                
+                itemDev.innerHTML = `
+                    <div class="timeline-icon"><i class="fa-solid fa-arrow-down text-[8px] text-emerald-400"></i></div>
+                    <div class="timeline-content">
+                        <span class="timeline-time">${m.fecha_devolucion} ${m.hora_devolucion} — Devolución registrada</span>
+                        <p class="text-[11px] text-gray-200 mt-1">Equipo devuelto a la oficina.</p>
+                        ${firmaSnippet}
+                    </div>
+                `;
+                container.appendChild(itemDev);
+            }
+        });
+    } catch(err) {
+        container.innerHTML = `<div class="text-xs text-rose-400 text-center py-4">Error al cargar historial: ${err.message}</div>`;
+    }
+}
+
+function closeHistorySerialModal() {
+    document.getElementById('history-serial-modal').classList.add('hidden');
+}
+
+
+// ============ MODAL DE FIRMAS DIGITALES (KIOSKO DE SEGURIDAD) ============
+let signatureCanvas, signatureCtx, isDrawing = false;
+
+function initSignatureCanvas() {
+    signatureCanvas = document.getElementById('signature-canvas');
+    if (!signatureCanvas) return;
+    signatureCtx = signatureCanvas.getContext('2d');
+
+    function resizeCanvas() {
+        const rect = signatureCanvas.getBoundingClientRect();
+        const tempImg = signatureCanvas.toDataURL();
+        signatureCanvas.width = rect.width;
+        signatureCanvas.height = 180;
+        
+        signatureCtx.strokeStyle = '#0ea5e9';
+        signatureCtx.lineWidth = 3.5;
+        signatureCtx.lineCap = 'round';
+        signatureCtx.lineJoin = 'round';
+
+        const img = new Image();
+        img.src = tempImg;
+        img.onload = () => signatureCtx.drawImage(img, 0, 0);
+    }
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    signatureCanvas.addEventListener('mousedown', (e) => {
+        isDrawing = true;
+        const rect = signatureCanvas.getBoundingClientRect();
+        signatureCtx.beginPath();
+        signatureCtx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    });
+
+    signatureCanvas.addEventListener('mousemove', (e) => {
+        if (!isDrawing) return;
+        const rect = signatureCanvas.getBoundingClientRect();
+        signatureCtx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+        signatureCtx.stroke();
+    });
+
+    window.addEventListener('mouseup', () => { isDrawing = false; });
+
+    signatureCanvas.addEventListener('touchstart', (e) => {
+        isDrawing = true;
+        const rect = signatureCanvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        signatureCtx.beginPath();
+        signatureCtx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+        e.preventDefault();
+    }, { passive: false });
+
+    signatureCanvas.addEventListener('touchmove', (e) => {
+        if (!isDrawing) return;
+        const rect = signatureCanvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        signatureCtx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+        signatureCtx.stroke();
+        e.preventDefault();
+    }, { passive: false });
+
+    signatureCanvas.addEventListener('touchend', () => { isDrawing = false; });
+}
+
+function clearSignatureCanvas() {
+    if (!signatureCanvas) return;
+    signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+}
+
+function openSignatureKiosk(movId, type, name) {
+    document.getElementById('signature-mov-id').value = movId;
+    document.getElementById('signature-type').value = type;
+    document.getElementById('signature-asesor-name').value = name;
+    document.getElementById('signature-flow-type').textContent = type === 'salida' ? 'SALIDA FÍSICA' : 'DEVOLUCIÓN DE EQUIPO';
+
+    document.getElementById('signature-modal').classList.remove('hidden');
+
+    setTimeout(() => {
+        if (!signatureCanvas) {
+            initSignatureCanvas();
+        } else {
+            clearSignatureCanvas();
+            signatureCtx.strokeStyle = '#0ea5e9';
+            signatureCtx.lineWidth = 3.5;
+            signatureCtx.lineCap = 'round';
+            signatureCtx.lineJoin = 'round';
+        }
+    }, 100);
+}
+
+function closeSignatureModal() {
+    document.getElementById('signature-modal').classList.add('hidden');
+}
+
+async function confirmSignature() {
+    const buffer = new Uint32Array(signatureCtx.getImageData(0, 0, signatureCanvas.width, signatureCanvas.height).data.buffer);
+    const hasDrawn = buffer.some(color => color !== 0);
+
+    if (!hasDrawn) {
+        showToast('Por favor, realiza tu firma antes de confirmar.', 'warning');
+        return;
+    }
+
+    const movId = document.getElementById('signature-mov-id').value;
+    const type  = document.getElementById('signature-type').value;
+    const name  = document.getElementById('signature-asesor-name').value;
+    const signatureBase64 = signatureCanvas.toDataURL();
+
+    let updateData = {};
+    if (type === 'salida') {
+        updateData = {
+            hora_salida: nowTime(),
+            firma_salida: signatureBase64,
+            estado: 'En Teletrabajo'
+        };
+    } else {
+        updateData = {
+            fecha_devolucion: todayStr(),
+            hora_devolucion: nowTime(),
+            firma_devolucion: signatureBase64,
+            estado: 'Devuelto'
+        };
+    }
+
+    try {
+        const { error } = await sb.from('movimientos').update(updateData).eq('id', movId);
+        if (error) throw error;
+
+        closeSignatureModal();
+        showToast(`✅ Firma registrada con éxito para ${name}.`, 'success');
+        
+        if (currentRole === 'seguridad') {
+            loadSeguridad();
+        } else {
+            loadMonitor();
+        }
+    } catch(err) {
+        showToast('Error al registrar firma: ' + err.message, 'error');
+    }
+}
+
 // ============ INCIDENCIAS (SISTEMAS) ============
 async function loadIncidencias() {
     const tbody = document.getElementById('incidencias-tbody');
@@ -1557,25 +1869,87 @@ async function loadSeguridad() {
     movs.forEach(m => {
         const a = m.asesor;
         let badgeClass = 'badge-seleccionado';
-        if (m.estado === 'En Teletrabajo') badgeClass = 'badge-teletrabajo';
-        if (m.estado === 'Devuelto') badgeClass = 'badge-devuelto';
-        if (m.estado === 'Incidencia') badgeClass = 'badge-incidencia';
+        let actionHTML = '';
+        let cardStyle = '';
+        let badgeText = m.estado;
+
+        if (m.estado === 'Autorizado') {
+            badgeClass = 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30';
+            badgeText = 'Autorizado (Listo)';
+            cardStyle = 'cursor-pointer hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(14,165,233,0.15)]';
+            actionHTML = `
+                <div class="mt-3 flex justify-end">
+                    <button class="btn btn-primary bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-1.5 px-4 rounded text-[10px] uppercase tracking-wider w-full flex items-center justify-center gap-1.5" onclick="openSignatureKiosk('${m.id}', 'salida', '${a.nombre}')">
+                        <i class="fa-solid fa-pen-nib"></i> Firmar Salida
+                    </button>
+                </div>
+            `;
+        } else if (m.estado === 'En Teletrabajo') {
+            badgeClass = 'badge-teletrabajo';
+            badgeText = 'En Teletrabajo';
+            cardStyle = 'cursor-pointer hover:border-amber-400 hover:shadow-[0_0_15px_rgba(245,158,11,0.15)]';
+            actionHTML = `
+                <div class="mt-3 flex justify-end">
+                    <button class="btn btn-warning bg-amber-600 hover:bg-amber-500 text-white font-bold py-1.5 px-4 rounded text-[10px] uppercase tracking-wider w-full flex items-center justify-center gap-1.5" onclick="openSignatureKiosk('${m.id}', 'devolucion', '${a.nombre}')">
+                        <i class="fa-solid fa-pen-nib"></i> Firmar Devolución
+                    </button>
+                </div>
+            `;
+        } else if (m.estado === 'Devuelto') {
+            badgeClass = 'badge-devuelto';
+            badgeText = 'Devuelto ✓';
+            cardStyle = 'opacity-70 cursor-default';
+            const signatureImg = m.firma_devolucion 
+                ? `<div class="mt-2 border border-white/5 rounded p-1 bg-black/30 flex justify-center"><img src="${m.firma_devolucion}" class="h-8 object-contain filter invert opacity-60" alt="Firma"/></div>` 
+                : '<span class="text-[9px] text-gray-500 italic block mt-1">(Firmado en físico)</span>';
+            actionHTML = `
+                <div class="mt-2 text-center text-[10px] text-emerald-400 uppercase tracking-widest font-bold">
+                    <i class="fa-solid fa-circle-check"></i> Proceso Completado
+                    ${signatureImg}
+                </div>
+            `;
+        } else if (m.estado === 'Incidencia') {
+            badgeClass = 'badge-incidencia';
+            badgeText = 'Incidencia ⚠️';
+            cardStyle = 'opacity-70 cursor-default';
+            actionHTML = `
+                <div class="mt-2 text-[10px] text-red-400 font-bold text-center">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Incidencia: ${m.incidencia ? m.incidencia.tipo : 'Reportada'}
+                </div>
+            `;
+        }
+
         const card = document.createElement('div');
-        card.className = 'card advisor-card';
+        card.className = `card advisor-card ${cardStyle}`;
+        if (m.estado === 'Autorizado') {
+            card.onclick = (e) => {
+                if (!e.target.closest('button') && !e.target.closest('.cursor-pointer')) {
+                    openSignatureKiosk(m.id, 'salida', a.nombre);
+                }
+            };
+        } else if (m.estado === 'En Teletrabajo') {
+            card.onclick = (e) => {
+                if (!e.target.closest('button') && !e.target.closest('.cursor-pointer')) {
+                    openSignatureKiosk(m.id, 'devolucion', a.nombre);
+                }
+            };
+        }
+
         card.innerHTML = `
             <div class="adv-card-top">
                 <div>
                     <div class="adv-name">${a.nombre}</div>
                     <div class="adv-cedula">CI: ${a.cedula}</div>
                 </div>
-                <span class="badge ${badgeClass}">${m.estado}</span>
+                <span class="badge ${badgeClass}">${badgeText}</span>
             </div>
             <div class="adv-details">
-                <div class="detail-row"><span>N° de Serie</span><span>${a.serial}</span></div>
+                <div class="detail-row"><span>N° de Serie</span><span class="text-cyan-400 font-mono underline cursor-pointer hover:text-pink-400" onclick="event.stopPropagation(); showHistorySerial('${a.serial}')" title="Ver Historial Clínico">${a.serial}</span></div>
                 <div class="detail-row"><span>Modelo</span><span>${a.modelo || '—'}</span></div>
                 <div class="detail-row"><span>Hora Salida</span><span>${m.hora_salida || 'No registrada'}</span></div>
                 <div class="detail-row"><span>Retorno</span><span>${m.hora_devolucion || 'Pendiente'}</span></div>
             </div>
+            ${actionHTML}
         `;
         grid.appendChild(card);
     });
