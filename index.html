@@ -607,7 +607,57 @@
             </button>
         </div>
     </div>
+<!-- ===== EDIT MOVEMENT MODAL (SISTEMAS) ===== -->
+<div id='edit-mov-modal' class='modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4'>
+    <div class='modal relative bg-cyber-sidebar border border-cyan-500/20 rounded-xl p-6 w-full max-w-[450px] shadow-2xl animate-scaleUp'>
+        <h3 class='text-sm font-bold text-cyan-400 uppercase tracking-wider mb-4 flex items-center gap-2'>
+            <i class='fa-solid fa-pen-to-square'></i> Editar Registro de Movimiento
+        </h3>
+        
+        <input type='hidden' id='edit-mov-id'>
+        
+        <div class='flex flex-col gap-4 mb-6'>
+            <div class='form-group flex flex-col gap-1.5'>
+                <label class='text-[10px] font-bold text-gray-400 uppercase tracking-wider'>Asesor</label>
+                <div id='edit-mov-name' class='text-xs font-bold text-gray-200 bg-white/5 p-2.5 rounded-lg border border-white/5'>—</div>
+            </div>
+            
+            <div class='form-group flex flex-col gap-1.5'>
+                <label class='text-[10px] font-bold text-cyan-400 uppercase tracking-wider'>Estado del Registro</label>
+                <select id='edit-mov-estado' class='bg-black/50 border border-white/10 rounded-lg p-2.5 text-xs text-gray-100 outline-none focus:border-cyan-400'>
+                    <option value='Autorizado'>Autorizado (En Espera)</option>
+                    <option value='En Teletrabajo'>En Teletrabajo (Fuera)</option>
+                    <option value='Devuelto'>Devuelto</option>
+                    <option value='Incidencia'>Incidencia</option>
+                </select>
+            </div>
+            
+            <div class='grid grid-cols-2 gap-3'>
+                <div class='form-group flex flex-col gap-1.5'>
+                    <label class='text-[10px] font-bold text-cyan-400 uppercase tracking-wider'>Hora de Salida</label>
+                    <input type='text' id='edit-mov-hora-salida' placeholder='HH:MM:SS (AM/PM)' class='bg-black/50 border border-white/10 rounded-lg p-2.5 text-xs text-gray-100 outline-none focus:border-cyan-400 font-mono'>
+                </div>
+                <div class='form-group flex flex-col gap-1.5'>
+                    <label class='text-[10px] font-bold text-cyan-400 uppercase tracking-wider'>Hora de Retorno</label>
+                    <input type='text' id='edit-mov-hora-devolucion' placeholder='HH:MM:SS (AM/PM)' class='bg-black/50 border border-white/10 rounded-lg p-2.5 text-xs text-gray-100 outline-none focus:border-cyan-400 font-mono'>
+                </div>
+            </div>
+            
+            <div class='form-group flex flex-col gap-1.5'>
+                <label class='text-[10px] font-bold text-cyan-400 uppercase tracking-wider'>Observaciones / Notas</label>
+                <textarea id='edit-mov-notas' rows='3' placeholder='Observaciones del guardia o sistemas...' class='bg-black/50 border border-white/10 rounded-lg p-2.5 text-xs text-gray-100 outline-none focus:border-cyan-400 resize-none'></textarea>
+            </div>
+        </div>
+        
+        <div class='modal-actions flex justify-end gap-3'>
+            <button class='btn btn-secondary bg-white/5 border-none hover:bg-white/10 text-xs py-2 px-4' onclick='closeEditMovModal()'>Cancelar</button>
+            <button class='btn btn-primary bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 border-none text-white font-bold py-2 px-5 rounded-lg text-xs' onclick='saveEditedMovement()'>
+                <i class='fa-solid fa-floppy-disk mr-1.5'></i> Guardar Cambios
+            </button>
+        </div>
+    </div>
 </div>
+
 
 <!-- ===== TOAST ===== -->
 <div id='toast' class='toast hidden'></div>
@@ -1371,6 +1421,91 @@ async function cancelarSalidaDesdeTI(movId, name) {
     }
 }
 
+let editingMovItem = null;
+
+async function eliminarMovimientoDesdeTI(movId, name) {
+    const result = await Swal.fire({
+        title: '¿Eliminar Registro por Completo?',
+        text: `¿Deseas eliminar permanentemente el registro de control de hoy para "${name}"? Se borrarán sus firmas y marcas de horario.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        background: '#050a12',
+        color: '#f8fafc',
+        confirmButtonColor: '#ff0055',
+        cancelButtonColor: '#475569'
+    });
+
+    if (result.isConfirmed) {
+        const { error } = await sb.from('movimientos').delete().eq('id', movId);
+        if (error) {
+            showToast('Error al eliminar: ' + error.message, 'error');
+        } else {
+            showToast(`Registro de ${name} eliminado correctamente.`, 'success');
+            loadMonitor();
+        }
+    }
+}
+
+async function openEditMovModal(movId) {
+    const mov = allMonitorMovs.find(m => String(m.id) === String(movId));
+    if (!mov) return;
+    
+    editingMovItem = mov;
+    
+    document.getElementById('edit-mov-id').value = movId;
+    document.getElementById('edit-mov-name').textContent = mov.asesor.nombre;
+    document.getElementById('edit-mov-estado').value = mov.estado;
+    document.getElementById('edit-mov-hora-salida').value = mov.hora_salida || '';
+    document.getElementById('edit-mov-hora-devolucion').value = mov.hora_devolucion || '';
+    document.getElementById('edit-mov-notas').value = mov.notas || '';
+    
+    document.getElementById('edit-mov-modal').classList.remove('hidden');
+}
+
+function closeEditMovModal() {
+    document.getElementById('edit-mov-modal').classList.add('hidden');
+}
+
+async function saveEditedMovement() {
+    const movId = document.getElementById('edit-mov-id').value;
+    const estado = document.getElementById('edit-mov-estado').value;
+    const horaSalida = document.getElementById('edit-mov-hora-salida').value.trim();
+    const horaDevolucion = document.getElementById('edit-mov-hora-devolucion').value.trim();
+    const notas = document.getElementById('edit-mov-notas').value.trim();
+    
+    const updateData = {
+        estado: estado,
+        hora_salida: horaSalida || null,
+        hora_devolucion: horaDevolucion || null,
+        notas: notas || null
+    };
+    
+    if (estado === 'Devuelto' && editingMovItem && !editingMovItem.fecha_devolucion) {
+        updateData.fecha_devolucion = todayStr();
+    }
+    
+    if (estado === 'Autorizado') {
+        updateData.hora_salida = null;
+        updateData.hora_devolucion = null;
+        updateData.fecha_devolucion = null;
+        updateData.firma_salida = null;
+        updateData.firma_devolucion = null;
+    }
+    
+    try {
+        const { error } = await sb.from('movimientos').update(updateData).eq('id', movId);
+        if (error) throw error;
+        
+        closeEditMovModal();
+        showToast('✅ Registro de movimiento actualizado con éxito.', 'success');
+        loadMonitor();
+    } catch(err) {
+        showToast('Error al actualizar movimiento: ' + err.message, 'error');
+    }
+}
+
 async function resetTodayList() {
     if (!confirm('¿Deseas BORRAR completamente la lista de hoy? Esta acción no se puede deshacer.')) return;
     const today = todayStr();
@@ -1508,19 +1643,26 @@ function renderMonitorGrid(movs) {
                 <div class="detail-row"><span>Hora Retorno</span><span>${m.hora_devolucion || '--:--'}</span></div>
                 ${obsSnippet}
             </div>
-            <div class="adv-actions">
-                <button class="btn btn-warning btn-sm" ${canCheckout ? '' : 'disabled'} onclick="openCheckoutModal('${m.id}')">
-                    📤 Salida
-                </button>
-                <button class="btn btn-success btn-sm" ${canCheckin ? '' : 'disabled'} onclick="openCheckinModal('${m.id}')">
-                    📥 Ingreso
-                </button>
-                <button class="btn btn-rose btn-sm" ${canIncident ? '' : 'disabled'} onclick="openIncidentModal('${m.id}')" title="Reportar incidencia">
-                    ⚠️
-                </button>
-                <button class="btn btn-danger btn-sm" ${canCheckout ? '' : 'disabled'} onclick="cancelarSalidaDesdeTI('${m.id}', '${a.nombre}')" title="Cancelar Autorización">
-                    🚫 Anular
-                </button>
+            <div class="adv-actions flex flex-wrap gap-2 justify-between">
+                <div class="flex gap-1.5 grow">
+                    <button class="btn btn-warning btn-sm grow" ${canCheckout ? '' : 'disabled'} onclick="openCheckoutModal('${m.id}')">
+                        📤 Salida
+                    </button>
+                    <button class="btn btn-success btn-sm grow" ${canCheckin ? '' : 'disabled'} onclick="openCheckinModal('${m.id}')">
+                        📥 Ingreso
+                    </button>
+                    <button class="btn btn-rose btn-sm" ${canIncident ? '' : 'disabled'} onclick="openIncidentModal('${m.id}')" title="Reportar incidencia">
+                        ⚠️
+                    </button>
+                </div>
+                <div class="flex gap-1.5 shrink-0">
+                    <button class="btn btn-primary bg-cyan-600/20 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 btn-sm" onclick="openEditMovModal('${m.id}')" title="Editar Registro (TI)">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button class="btn btn-danger bg-rose-600/20 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 btn-sm" onclick="eliminarMovimientoDesdeTI('${m.id}', '${a.nombre}')" title="Eliminar Registro de Hoy (TI)">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
             </div>
         `;
         grid.appendChild(card);
