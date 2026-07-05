@@ -1968,20 +1968,29 @@ function buildPrintHTML() {
         </div>`;
     }
 
-    const rows = movs.map((m,i) => `
-        <tr>
-            <td style="text-align:center;">${i+1}</td>
-            <td>${m.asesor.nombre}</td>
-            <td style="text-align:center; font-family:monospace;">${m.asesor.cedula}</td>
-            <td style="text-align:center; font-family:monospace; font-size:9px;">${m.asesor.serial}</td>
-            <td>${m.asesor.modelo || '—'}</td>
-            <td class="sign-cell"></td>
-            <td style="text-align:center;">${m.hora_salida || ''}</td>
-            <td class="sign-cell"></td>
-            <td style="text-align:center;">${m.fecha_devolucion || ''}</td>
-            <td style="color:${m.incidencia ? '#c0392b' : 'inherit'}; font-size:9px;">${m.incidencia ? '⚠️ ' + m.incidencia.tipo + (m.incidencia.descripcion ? ': ' + m.incidencia.descripcion : '') : (m.estado === 'Devuelto' ? '✓ Devuelto' : '')}</td>
-        </tr>
-    `).join('');
+    const rows = movs.map((m,i) => {
+        const sigSalida = m.firma_salida 
+            ? `<img src='${m.firma_salida}' style='max-height: 35px; max-width: 100px; display: block; margin: 0 auto; filter: brightness(0);' alt='Firma Salida' />` 
+            : '';
+        const sigDevolucion = m.firma_devolucion 
+            ? `<img src='${m.firma_devolucion}' style='max-height: 35px; max-width: 100px; display: block; margin: 0 auto; filter: brightness(0);' alt='Firma Ingreso' />` 
+            : '';
+
+        return `
+            <tr>
+                <td style="text-align:center;">${i+1}</td>
+                <td>${m.asesor.nombre}</td>
+                <td style="text-align:center; font-family:monospace;">${m.asesor.cedula}</td>
+                <td style="text-align:center; font-family:monospace; font-size:9px;">${m.asesor.serial}</td>
+                <td>${m.asesor.modelo || '—'}</td>
+                <td style="text-align:center; vertical-align:middle; padding:2px;">${sigSalida}</td>
+                <td style="text-align:center;">${m.hora_salida || ''}</td>
+                <td style="text-align:center; vertical-align:middle; padding:2px;">${sigDevolucion}</td>
+                <td style="text-align:center;">${m.fecha_devolucion || ''}</td>
+                <td style="color:${m.incidencia ? '#c0392b' : 'inherit'}; font-size:9px;">${m.incidencia ? '⚠️ ' + m.incidencia.tipo + (m.incidencia.descripcion ? ': ' + m.incidencia.descripcion : '') : (m.estado === 'Devuelto' ? '✓ Devuelto' : '')}</td>
+            </tr>
+        `;
+    }).join('');
 
     return `
         <div class="print-page">
